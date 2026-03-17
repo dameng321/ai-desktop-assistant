@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Button } from './button';
-import { cn } from '@/lib';
 
 interface ConfirmDialogProps {
   open: boolean;

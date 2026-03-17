@@ -39,7 +39,7 @@ describe('chatStore', () => {
 
   describe('createConversation', () => {
     it('应该创建新对话并返回 ID', () => {
-      const { createConversation, conversations } = useChatStore.getState();
+      const { createConversation } = useChatStore.getState();
       
       const id = createConversation();
       

@@ -22,7 +22,6 @@ export function FileManager() {
     setSearchQuery,
     setSelectedFile,
     clearError,
-    clearSearch,
   } = useFileManager();
 
   const [showNewFolder, setShowNewFolder] = useState(false);

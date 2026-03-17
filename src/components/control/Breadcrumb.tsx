@@ -1,5 +1,3 @@
-import { cn } from '@/lib';
-
 interface BreadcrumbProps {
   path: string;
   onNavigate: (path: string) => void;
