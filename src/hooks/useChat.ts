@@ -25,7 +25,9 @@ export function useChat() {
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
-  const activeProvider = settings.model.providers.find(p => p.id === settings.model.activeProviderId);
+  const providers = settings.model?.providers || [];
+  const activeProviderId = settings.model?.activeProviderId || 'openai';
+  const activeProvider = providers.find(p => p.id === activeProviderId);
 
   useEffect(() => {
     if (activeProvider) {
@@ -33,10 +35,10 @@ export function useChat() {
         providerId: activeProvider.id,
         apiKey: activeProvider.apiKey,
         baseUrl: activeProvider.baseUrl,
-        model: settings.model.defaultModelId,
+        model: settings.model?.defaultModelId || 'gpt-4o',
       }));
     }
-  }, [activeProvider, settings.model.defaultModelId]);
+  }, [activeProvider, settings.model?.defaultModelId]);
 
   // 发送消息
   const sendMessage = useCallback(async (content: string) => {
@@ -88,9 +90,9 @@ export function useChat() {
       // 流式调用 AI
       let fullContent = '';
       for await (const chunk of aiService.chatStream(messages, {
-        model: settings.model.defaultModelId,
-        temperature: settings.model.temperature,
-        maxTokens: settings.model.maxTokens,
+        model: settings.model?.defaultModelId || 'gpt-4o',
+        temperature: settings.model?.temperature ?? 0.7,
+        maxTokens: settings.model?.maxTokens ?? 4096,
         signal: abortControllerRef.current.signal,
       })) {
         fullContent += chunk;

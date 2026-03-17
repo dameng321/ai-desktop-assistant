@@ -58,6 +58,47 @@ const defaultSettings: UserSettings = {
   },
 };
 
+function migrateSettings(savedSettings: unknown): UserSettings {
+  if (!savedSettings || typeof savedSettings !== 'object') {
+    return defaultSettings;
+  }
+
+  const saved = savedSettings as Record<string, unknown>;
+  
+  // 检查是否需要迁移旧的 model 配置
+  if (saved.model && typeof saved.model === 'object') {
+    const model = saved.model as Record<string, unknown>;
+    
+    // 旧结构没有 providers 数组
+    if (!model.providers || !Array.isArray(model.providers)) {
+      const providers = getDefaultProviders();
+      
+      // 迁移旧的 apiKey 和 baseUrl 到 openai provider
+      if (model.apiKey || model.baseUrl) {
+        const openaiProvider = providers.find(p => p.id === 'openai');
+        if (openaiProvider) {
+          openaiProvider.apiKey = (model.apiKey as string) || '';
+          openaiProvider.baseUrl = (model.baseUrl as string) || 'https://api.openai.com/v1';
+        }
+      }
+      
+      return {
+        ...defaultSettings,
+        ...saved as UserSettings,
+        model: {
+          providers,
+          activeProviderId: (model.provider as string) || 'openai',
+          defaultModelId: (model.model as string) || 'gpt-4o',
+          temperature: (model.temperature as number) ?? 0.7,
+          maxTokens: (model.maxTokens as number) ?? 4096,
+        },
+      };
+    }
+  }
+  
+  return { ...defaultSettings, ...saved as UserSettings };
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
@@ -152,18 +193,13 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        settings: {
-          ...state.settings,
-          model: {
-            ...state.settings.model,
-            providers: state.settings.model.providers.map(p => ({
-              ...p,
-              apiKey: p.apiKey,
-            })),
-          },
-        },
-      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // 迁移旧数据
+          const migratedSettings = migrateSettings(state.settings);
+          state.settings = migratedSettings;
+        }
+      },
     }
   )
 );
