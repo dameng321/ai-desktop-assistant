@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib';
+import { ConfirmDialog } from '@/components/ui';
 import type { Conversation } from '@/types';
 
 interface ConversationItemProps {
@@ -19,6 +20,7 @@ export function ConversationItem({
 }: ConversationItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversation.title);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -97,9 +99,7 @@ export function ConversationItem({
           <button
             onClick={e => {
               e.stopPropagation();
-              if (confirm('确定删除此对话？')) {
-                onDelete();
-              }
+              setShowDeleteConfirm(true);
             }}
             className={cn(
               "p-1 rounded hover:bg-background/20",
@@ -113,6 +113,20 @@ export function ConversationItem({
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="删除对话"
+        message="确定删除此对话？此操作无法撤销。"
+        confirmText="删除"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={() => {
+          onDelete();
+          setShowDeleteConfirm(false);
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

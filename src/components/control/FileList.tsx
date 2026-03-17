@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib';
+import { ConfirmDialog } from '@/components/ui';
 import type { FileItem } from '@/services/api';
 
 interface FileListProps {
@@ -21,6 +22,7 @@ export function FileList({
 }: FileListProps) {
   const [renamingFile, setRenamingFile] = useState<FileItem | null>(null);
   const [newName, setNewName] = useState('');
+  const [deleteFile, setDeleteFile] = useState<FileItem | null>(null);
 
   const handleRename = (file: FileItem) => {
     if (newName.trim() && newName !== file.name) {
@@ -132,10 +134,7 @@ export function FileList({
                       <button
                         onClick={e => {
                           e.stopPropagation();
-                          const msg = file.is_dir ? '确定删除此文件夹？' : '确定删除此文件？';
-                          if (confirm(msg)) {
-                            onDelete(file);
-                          }
+                          setDeleteFile(file);
                         }}
                         className="p-1 rounded hover:bg-background/50 text-destructive"
                         title="删除"
@@ -152,6 +151,22 @@ export function FileList({
           ))}
         </tbody>
       </table>
+
+      <ConfirmDialog
+        open={!!deleteFile}
+        title="删除确认"
+        message={deleteFile ? `确定删除此${deleteFile.is_dir ? '文件夹' : '文件'}？此操作无法撤销。` : ''}
+        confirmText="删除"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteFile) {
+            onDelete(deleteFile);
+          }
+          setDeleteFile(null);
+        }}
+        onCancel={() => setDeleteFile(null)}
+      />
     </div>
   );
 }
