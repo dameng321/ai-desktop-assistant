@@ -57,3 +57,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Markdown prose 样式 */
+.prose {
+  color: inherit;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: inherit;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.prose p {
+  margin: 0.5em 0;
+}
+
+.prose ul, .prose ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}
+
+.prose blockquote {
+  border-left: 3px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.prose code {
+  font-size: 0.875em;
+}
+
+.prose pre {
+  margin: 0.75em 0;
+}
+
+.prose hr {
+  border-color: hsl(var(--border));
+  margin: 1em 0;
+}
