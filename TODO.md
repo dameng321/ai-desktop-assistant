@@ -8,7 +8,7 @@
 | 模块 | 状态 | 进度 |
 |------|------|------|
 | 项目初始化 | ✅ 已完成 | 100% |
-| 智能对话模块 | 🚧 进行中 | 30% |
+| 智能对话模块 | ✅ 已完成 | 100% |
 | 知识库模块 | 📋 待开始 | 0% |
 | 电脑操控模块 | 📋 待开始 | 0% |
 | 微信互联模块 | 📋 待开始 | 0% |
@@ -32,22 +32,25 @@
 - [x] 编写单元测试示例
 - [x] 更新 AGENTS.md 配置文件
 - [x] 创建任务追踪文件
+- [x] 初始化 Git 仓库并推送到 GitHub
+
+### 智能对话模块 - 基础功能 (2026-03-17)
+- [x] 创建 `useChat` Hook（对话逻辑）
+- [x] 创建 AI 服务接口 (`src/services/ai/`)
+- [x] 实现 OpenAI API 调用
+- [x] 实现流式响应
+- [x] 创建 ChatWindow 组件
+- [x] 创建 MessageList 组件
+- [x] 创建 MessageItem 组件
+- [x] 创建 InputBar 组件
+- [x] 支持对话历史持久化（localStorage）
+- [x] 编写测试用例（29 个测试全部通过）
 
 ---
 
 ## 🚧 进行中任务
 
-### 智能对话模块 - 基础功能
-- [ ] 创建 `useChat` Hook（对话逻辑）
-- [ ] 创建 AI 服务接口 (`src/services/ai/`)
-- [ ] 实现 OpenAI API 调用
-- [ ] 实现流式响应
-- [ ] 创建 ChatWindow 组件
-- [ ] 创建 MessageList 组件
-- [ ] 创建 MessageItem 组件
-- [ ] 创建 InputBar 组件
-- [ ] 支持对话历史持久化
-- [ ] 编写测试用例
+无
 
 ---
 
@@ -55,13 +58,13 @@
 
 ### Phase 1: 智能对话模块 (V1.0 MVP)
 
-#### 对话核心功能
-- [ ] 多轮对话上下文管理
+#### 对话核心功能（增强）
 - [ ] Markdown 渲染支持
 - [ ] 代码高亮
 - [ ] 消息复制功能
 - [ ] 消息重新生成
 - [ ] 对话导出 (MD/TXT)
+- [ ] 多轮对话上下文管理优化
 
 #### 语音对话功能
 - [ ] 创建 `useVoice` Hook
@@ -198,6 +201,11 @@
 - 添加全局中文回复规则
 - 初始化 Git 仓库并推送到 GitHub
 - **仓库地址**: https://github.com/dameng321/ai-desktop-assistant
+- **完成智能对话模块基础功能**：
+  - AI 服务接口（支持 OpenAI API 流式调用）
+  - useChat Hook（对话核心逻辑）
+  - 对话组件（ChatWindow, MessageList, MessageItem, InputBar）
+  - 测试用例（29 个测试全部通过）
 
 ---
 
@@ -247,12 +255,25 @@
 
 ## 📌 下一步行动
 
-**当前优先级**: 智能对话模块基础功能
+**当前优先级**: 设置中心模块（API Key 配置）
 
-1. 创建 `src/hooks/useChat.ts` - 对话核心逻辑
-2. 创建 `src/services/ai/index.ts` - AI 服务接口
-3. 实现 OpenAI API 流式调用
-4. 完善对话界面组件
+1. 创建设置页面组件
+2. 实现 API Key 配置功能
+3. 实现模型选择功能
+4. 实现主题切换功能
+
+---
+
+## 📦 Git 提交记录
+
+| 提交 | 描述 |
+|------|------|
+| `feat: 项目初始化` | 项目基础结构和配置 |
+| `docs: 更新 TODO.md 添加 GitHub 仓库地址` | 文档更新 |
+| `feat(ai-service): 创建 AI 服务接口` | AI 服务接口、OpenAI Provider |
+| `feat(hooks): 创建 useChat Hook` | 对话核心逻辑 |
+| `feat(chat): 创建对话组件` | ChatWindow, MessageList, MessageItem, InputBar |
+| `test: 添加智能对话模块测试用例` | 29 个测试用例 |
 
 ---
 
