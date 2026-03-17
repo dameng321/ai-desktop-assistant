@@ -9,6 +9,7 @@ export function ChatWindow() {
     error,
     sendMessage,
     stopGeneration,
+    regenerateMessage,
     clearError,
   } = useChat();
 
@@ -28,7 +29,11 @@ export function ChatWindow() {
       )}
 
       {/* 消息列表 */}
-      <MessageList messages={messages} isStreaming={isLoading} />
+      <MessageList 
+        messages={messages} 
+        isStreaming={isLoading} 
+        onRegenerate={regenerateMessage}
+      />
 
       {/* 输入框 */}
       <InputBar

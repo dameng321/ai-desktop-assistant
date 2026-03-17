@@ -12,6 +12,7 @@ export function useChat() {
     createConversation,
     addMessage,
     updateMessage,
+    deleteMessage,
     setCurrentConversation,
     deleteConversation,
     updateConversationTitle,
@@ -121,6 +122,78 @@ export function useChat() {
     setIsLoading(false);
   }, []);
 
+  // 重新生成最后一条 AI 回复
+  const regenerateMessage = useCallback(async () => {
+    if (!currentConversationId || isLoading) return;
+
+    const conversation = useChatStore.getState().conversations.find(c => c.id === currentConversationId);
+    if (!conversation || conversation.messages.length === 0) return;
+
+    // 找到最后一条助手消息
+    const lastAssistantIndex = conversation.messages.findLastIndex(m => m.role === 'assistant');
+    if (lastAssistantIndex === -1) return;
+
+    // 找到最后一条用户消息（在助手消息之前）
+    const lastUserMessage = conversation.messages.slice(0, lastAssistantIndex).findLast(m => m.role === 'user');
+    if (!lastUserMessage) return;
+
+    // 删除最后的助手消息
+    const lastAssistantMessage = conversation.messages[lastAssistantIndex];
+    deleteMessage(currentConversationId, lastAssistantMessage.id);
+
+    setError(null);
+    setIsLoading(true);
+
+    // 创建新的助手消息占位符
+    const assistantMessageId = generateId();
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+    };
+    addMessage(currentConversationId, assistantMessage);
+
+    try {
+      abortControllerRef.current = new AbortController();
+
+      // 获取更新后的对话
+      const updatedConversation = useChatStore.getState().conversations.find(c => c.id === currentConversationId);
+      
+      // 构建消息历史（不包含刚才删除的助手消息）
+      const messages = [
+        { role: 'system' as const, content: chatSettings.systemPrompt || '你是一个友好的AI助手。' },
+        ...(updatedConversation?.messages || []).map(m => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+      ];
+
+      // 流式调用 AI
+      let fullContent = '';
+      for await (const chunk of aiService.chatStream(messages, {
+        model: settings.model?.defaultModelId || 'gpt-4o',
+        temperature: settings.model?.temperature ?? 0.7,
+        maxTokens: settings.model?.maxTokens ?? 4096,
+        signal: abortControllerRef.current.signal,
+      })) {
+        fullContent += chunk;
+        updateMessage(currentConversationId, assistantMessageId, fullContent);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
+      const errorMessage = err instanceof Error ? err.message : '重新生成失败';
+      setError(errorMessage);
+      updateMessage(currentConversationId, assistantMessageId, `抱歉，发生了错误：${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  }, [currentConversationId, isLoading, chatSettings, settings.model, deleteMessage, addMessage, updateMessage]);
+
   // 清除错误
   const clearError = useCallback(() => {
     setError(null);
@@ -143,6 +216,7 @@ export function useChat() {
     // 操作
     sendMessage,
     stopGeneration,
+    regenerateMessage,
     clearError,
     newConversation,
     

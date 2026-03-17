@@ -5,9 +5,10 @@ import type { Message } from '@/types';
 interface MessageListProps {
   messages: Message[];
   isStreaming?: boolean;
+  onRegenerate?: () => void;
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({ messages, isStreaming, onRegenerate }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // 自动滚动到底部
@@ -26,6 +27,8 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     );
   }
 
+  const lastAssistantIndex = messages.findLastIndex(m => m.role === 'assistant');
+
   return (
     <div className="flex-1 overflow-auto p-4">
       {messages.map((message, index) => (
@@ -33,6 +36,8 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
           key={message.id}
           message={message}
           isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+          isLastAssistant={index === lastAssistantIndex}
+          onRegenerate={index === lastAssistantIndex ? onRegenerate : undefined}
         />
       ))}
       <div ref={bottomRef} />
