@@ -16,11 +16,26 @@ export interface GeneralSettings {
   closeBehavior: 'minimize' | 'exit';
 }
 
-export interface ModelSettings {
-  provider: string;
-  model: string;
+export interface ModelConfig {
+  id: string;
+  name: string;
+  maxTokens?: number;
+}
+
+export interface ModelProvider {
+  id: string;
+  name: string;
+  type: 'preset' | 'custom';
   apiKey: string;
-  baseUrl?: string;
+  baseUrl: string;
+  models: ModelConfig[];
+  customModels?: string[];
+}
+
+export interface ModelSettings {
+  providers: ModelProvider[];
+  activeProviderId: string;
+  defaultModelId: string;
   temperature: number;
   maxTokens: number;
 }

@@ -2,138 +2,319 @@ import { useState } from 'react';
 import { Button, Input } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
+import { createCustomProvider } from '@/lib/providers';
+import type { ModelProvider } from '@/types';
 
 export function ModelSettings() {
-  const { settings, updateModel } = useSettingsStore();
-  const [apiKey, setApiKey] = useState(settings.model.apiKey);
-  const [baseUrl, setBaseUrl] = useState(settings.model.baseUrl || '');
-  const [showKey, setShowKey] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  const { settings, updateModel, updateProvider, addCustomProvider, removeProvider, setActiveProvider } = useSettingsStore();
+  const [showAddProvider, setShowAddProvider] = useState(false);
+  const [newProviderName, setNewProviderName] = useState('');
+  const [newProviderUrl, setNewProviderUrl] = useState('');
+  const [newModelInput, setNewModelInput] = useState<Record<string, string>>({});
+  const [isTesting, setIsTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, 'success' | 'error' | null>>({});
+  const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
 
-  const handleSaveApiKey = () => {
-    updateModel({ apiKey, baseUrl });
-    // 同时保存到 localStorage 供 AI 服务使用
-    localStorage.setItem('openai_api_key', apiKey);
-    if (baseUrl) {
-      localStorage.setItem('openai_base_url', baseUrl);
-    }
-  };
+  const activeProvider = settings.model.providers.find(p => p.id === settings.model.activeProviderId);
 
-  const handleTestConnection = async () => {
-    if (!apiKey) return;
+  const handleTestConnection = async (provider: ModelProvider) => {
+    if (!provider.apiKey && provider.id !== 'ollama') return;
     
-    setIsTesting(true);
-    setTestResult(null);
+    setIsTesting(provider.id);
+    setTestResult(prev => ({ ...prev, [provider.id]: null }));
     
     try {
-      const response = await fetch(`${baseUrl || 'https://api.openai.com/v1'}/models`, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      });
+      const testUrl = provider.id === 'ollama' 
+        ? `${provider.baseUrl}/tags`
+        : `${provider.baseUrl}/models`;
+      
+      const headers: Record<string, string> = {};
+      if (provider.apiKey) {
+        if (provider.id === 'google') {
+          headers['x-goog-api-key'] = provider.apiKey;
+        } else if (provider.id === 'anthropic') {
+          headers['x-api-key'] = provider.apiKey;
+        } else {
+          headers['Authorization'] = `Bearer ${provider.apiKey}`;
+        }
+      }
+      
+      const response = await fetch(testUrl, { headers });
       
       if (response.ok) {
-        setTestResult('success');
+        setTestResult(prev => ({ ...prev, [provider.id]: 'success' }));
       } else {
-        setTestResult('error');
+        setTestResult(prev => ({ ...prev, [provider.id]: 'error' }));
       }
     } catch {
-      setTestResult('error');
+      setTestResult(prev => ({ ...prev, [provider.id]: 'error' }));
     } finally {
-      setIsTesting(false);
+      setIsTesting(null);
     }
   };
 
-  const modelOptions = [
-    { value: 'gpt-4-turbo-preview', label: 'GPT-4 Turbo' },
-    { value: 'gpt-4', label: 'GPT-4' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-    { value: 'gpt-4o', label: 'GPT-4o' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-  ];
+  const handleAddCustomProvider = () => {
+    if (!newProviderName.trim() || !newProviderUrl.trim()) return;
+    
+    const provider = createCustomProvider(newProviderName.trim(), newProviderUrl.trim());
+    addCustomProvider(provider);
+    setActiveProvider(provider.id);
+    
+    setNewProviderName('');
+    setNewProviderUrl('');
+    setShowAddProvider(false);
+  };
+
+  const handleAddCustomModel = (providerId: string) => {
+    const modelId = newModelInput[providerId]?.trim();
+    if (!modelId) return;
+    
+    const provider = settings.model.providers.find(p => p.id === providerId);
+    if (!provider) return;
+    
+    const newModel = { id: modelId, name: modelId };
+    const updatedModels = [...provider.models, newModel];
+    
+    updateProvider(providerId, { models: updatedModels });
+    setNewModelInput(prev => ({ ...prev, [providerId]: '' }));
+  };
+
+  const handleRemoveProvider = (providerId: string) => {
+    if (settings.model.providers.length <= 1) return;
+    const provider = settings.model.providers.find(p => p.id === providerId);
+    if (provider?.type === 'preset') return;
+    removeProvider(providerId);
+  };
 
   return (
-    <div>
-      <SettingsSection title="API 配置" description="配置 OpenAI API 密钥">
-        <SettingsItem label="API Key" description="你的 OpenAI API 密钥">
-          <div className="flex gap-2 w-64">
-            <Input
-              type={showKey ? 'text' : 'password'}
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="sk-..."
-              className="flex-1"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowKey(!showKey)}
-            >
-              {showKey ? '隐藏' : '显示'}
-            </Button>
-          </div>
-        </SettingsItem>
-
-        <SettingsItem label="API 地址" description="自定义 API 端点（可选）">
-          <Input
-            value={baseUrl}
-            onChange={e => setBaseUrl(e.target.value)}
-            placeholder="https://api.openai.com/v1"
-            className="w-64"
-          />
-        </SettingsItem>
-
-        <div className="flex gap-2 mt-4">
-          <Button onClick={handleSaveApiKey}>保存配置</Button>
-          <Button
-            variant="outline"
-            onClick={handleTestConnection}
-            disabled={!apiKey || isTesting}
-          >
-            {isTesting ? '测试中...' : '测试连接'}
-          </Button>
-        </div>
-
-        {testResult && (
-          <div
-            className={`mt-2 text-sm ${
-              testResult === 'success' ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {testResult === 'success' ? '✓ 连接成功' : '✗ 连接失败，请检查配置'}
-          </div>
-        )}
-      </SettingsSection>
-
-      <SettingsSection title="模型选择">
-        <SettingsItem label="默认模型" description="对话使用的默认模型">
-          <select
-            value={settings.model.model}
-            onChange={e => updateModel({ model: e.target.value })}
-            className="w-64 h-9 px-3 rounded-md border border-input bg-background text-sm"
-          >
-            {modelOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+    <div className="space-y-6">
+      <SettingsSection title="模型供应商" description="选择并配置 AI 模型供应商">
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {settings.model.providers.map(provider => (
+              <button
+                key={provider.id}
+                onClick={() => setActiveProvider(provider.id)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  settings.model.activeProviderId === provider.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                {provider.name}
+                {provider.type === 'custom' && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveProvider(provider.id);
+                    }}
+                    className="ml-2 opacity-60 hover:opacity-100"
+                  >
+                    ✕
+                  </span>
+                )}
+              </button>
             ))}
-          </select>
-        </SettingsItem>
+            <button
+              onClick={() => setShowAddProvider(true)}
+              className="px-3 py-1.5 rounded-md text-sm bg-muted hover:bg-muted/80"
+            >
+              + 添加供应商
+            </button>
+          </div>
+        </div>
       </SettingsSection>
 
-      <SettingsSection title="模型参数">
+      {showAddProvider && (
+        <SettingsSection title="添加自定义供应商" description="配置自定义 API 端点">
+          <div className="space-y-3">
+            <SettingsItem label="供应商名称" description="显示名称">
+              <Input
+                value={newProviderName}
+                onChange={e => setNewProviderName(e.target.value)}
+                placeholder="例如: My AI Service"
+                className="w-64"
+              />
+            </SettingsItem>
+            <SettingsItem label="API 地址" description="OpenAI 兼容的 API 端点">
+              <Input
+                value={newProviderUrl}
+                onChange={e => setNewProviderUrl(e.target.value)}
+                placeholder="https://api.example.com/v1"
+                className="w-64"
+              />
+            </SettingsItem>
+            <div className="flex gap-2">
+              <Button onClick={handleAddCustomProvider} disabled={!newProviderName || !newProviderUrl}>
+                添加
+              </Button>
+              <Button variant="outline" onClick={() => setShowAddProvider(false)}>
+                取消
+              </Button>
+            </div>
+          </div>
+        </SettingsSection>
+      )}
+
+      {activeProvider && (
+        <>
+          <SettingsSection 
+            title={`${activeProvider.name} 配置`} 
+            description={activeProvider.type === 'preset' ? '预设供应商配置' : '自定义供应商配置'}
+          >
+            {activeProvider.id !== 'ollama' && (
+              <SettingsItem label="API Key" description="API 密钥">
+                <div className="flex gap-2 w-80">
+                  <Input
+                    type={showApiKey[activeProvider.id] ? 'text' : 'password'}
+                    value={activeProvider.apiKey}
+                    onChange={e => updateProvider(activeProvider.id, { apiKey: e.target.value })}
+                    placeholder={activeProvider.id === 'google' ? 'AIza...' : 'sk-...'}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowApiKey(prev => ({ ...prev, [activeProvider.id]: !prev[activeProvider.id] }))}
+                  >
+                    {showApiKey[activeProvider.id] ? '隐藏' : '显示'}
+                  </Button>
+                </div>
+              </SettingsItem>
+            )}
+
+            <SettingsItem label="API 地址" description="自定义 API 端点">
+              <Input
+                value={activeProvider.baseUrl}
+                onChange={e => updateProvider(activeProvider.id, { baseUrl: e.target.value })}
+                placeholder="https://api.example.com/v1"
+                className="w-80"
+              />
+            </SettingsItem>
+
+            <div className="flex gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => handleTestConnection(activeProvider)}
+                disabled={isTesting === activeProvider.id}
+              >
+                {isTesting === activeProvider.id ? '测试中...' : '测试连接'}
+              </Button>
+            </div>
+
+            {testResult[activeProvider.id] && (
+              <div
+                className={`mt-2 text-sm ${
+                  testResult[activeProvider.id] === 'success' ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {testResult[activeProvider.id] === 'success' ? '✓ 连接成功' : '✗ 连接失败，请检查配置'}
+              </div>
+            )}
+          </SettingsSection>
+
+          <SettingsSection title="模型选择" description="选择默认使用的模型">
+            {activeProvider.models.length > 0 ? (
+              <SettingsItem label="默认模型" description="对话使用的默认模型">
+                <select
+                  value={settings.model.defaultModelId}
+                  onChange={e => updateModel({ defaultModelId: e.target.value })}
+                  className="w-80 h-9 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  {activeProvider.models.map(model => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+              </SettingsItem>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {activeProvider.id === 'ollama' 
+                    ? 'Ollama 需要先拉取模型。请手动添加模型名称：'
+                    : '暂无预设模型，请添加模型：'}
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    value={newModelInput[activeProvider.id] || ''}
+                    onChange={e => setNewModelInput(prev => ({ ...prev, [activeProvider.id]: e.target.value }))}
+                    placeholder={activeProvider.id === 'ollama' ? 'llama3.2, qwen2.5, ...' : '模型 ID'}
+                    className="w-64"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        handleAddCustomModel(activeProvider.id);
+                      }
+                    }}
+                  />
+                  <Button onClick={() => handleAddCustomModel(activeProvider.id)}>
+                    添加模型
+                  </Button>
+                </div>
+                {activeProvider.models.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {activeProvider.models.map(model => (
+                      <span
+                        key={model.id}
+                        className="px-2 py-1 bg-muted rounded text-sm flex items-center gap-1"
+                      >
+                        {model.name}
+                        <button
+                          onClick={() => {
+                            updateProvider(activeProvider.id, {
+                              models: activeProvider.models.filter(m => m.id !== model.id)
+                            });
+                          }}
+                          className="opacity-60 hover:opacity-100"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeProvider.models.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-2">快速添加其他模型：</p>
+                <div className="flex gap-2">
+                  <Input
+                    value={newModelInput[activeProvider.id] || ''}
+                    onChange={e => setNewModelInput(prev => ({ ...prev, [activeProvider.id]: e.target.value }))}
+                    placeholder="输入模型 ID"
+                    className="w-64"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        handleAddCustomModel(activeProvider.id);
+                      }
+                    }}
+                  />
+                  <Button variant="outline" onClick={() => handleAddCustomModel(activeProvider.id)}>
+                    添加
+                  </Button>
+                </div>
+              </div>
+            )}
+          </SettingsSection>
+        </>
+      )}
+
+      <SettingsSection title="模型参数" description="全局模型参数设置">
         <SettingsItem label="Temperature" description="控制回复的随机性 (0-2)">
-          <input
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            value={settings.model.temperature}
-            onChange={e => updateModel({ temperature: parseFloat(e.target.value) })}
-            className="w-32"
-          />
-          <span className="ml-2 text-sm w-8">{settings.model.temperature}</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={settings.model.temperature}
+              onChange={e => updateModel({ temperature: parseFloat(e.target.value) })}
+              className="w-32"
+            />
+            <span className="text-sm w-8">{settings.model.temperature}</span>
+          </div>
         </SettingsItem>
 
         <SettingsItem label="Max Tokens" description="回复的最大长度">
@@ -143,7 +324,7 @@ export function ModelSettings() {
             onChange={e => updateModel({ maxTokens: parseInt(e.target.value) || 4096 })}
             className="w-32"
             min={100}
-            max={128000}
+            max={2000000}
           />
         </SettingsItem>
       </SettingsSection>

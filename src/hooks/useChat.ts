@@ -1,20 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useChatStore } from '@/stores';
+import { useChatStore, useSettingsStore } from '@/stores';
 import { aiService, OpenAIProvider } from '@/services/ai';
 import type { Message } from '@/types';
 import { generateId } from '@/lib';
 
-interface UseChatOptions {
-  apiKey?: string;
-  baseUrl?: string;
-  model?: string;
-}
-
-export function useChat(options?: UseChatOptions) {
+export function useChat() {
   const {
     conversations,
     currentConversationId,
-    settings,
+    settings: chatSettings,
     createConversation,
     addMessage,
     updateMessage,
@@ -23,23 +17,26 @@ export function useChat(options?: UseChatOptions) {
     updateConversationTitle,
   } = useChatStore();
 
+  const { settings } = useSettingsStore();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
-  // 初始化 AI 服务
+  const activeProvider = settings.model.providers.find(p => p.id === settings.model.activeProviderId);
+
   useEffect(() => {
-    const apiKey = options?.apiKey || localStorage.getItem('openai_api_key') || '';
-    if (apiKey) {
+    if (activeProvider) {
       aiService.setProvider(new OpenAIProvider({
-        apiKey,
-        baseUrl: options?.baseUrl,
-        model: options?.model,
+        providerId: activeProvider.id,
+        apiKey: activeProvider.apiKey,
+        baseUrl: activeProvider.baseUrl,
+        model: settings.model.defaultModelId,
       }));
     }
-  }, [options?.apiKey, options?.baseUrl, options?.model]);
+  }, [activeProvider, settings.model.defaultModelId]);
 
   // 发送消息
   const sendMessage = useCallback(async (content: string) => {
@@ -80,7 +77,7 @@ export function useChat(options?: UseChatOptions) {
       // 构建消息历史
       const conversation = useChatStore.getState().conversations.find(c => c.id === conversationId);
       const messages = [
-        { role: 'system' as const, content: settings.systemPrompt || '你是一个友好的AI助手。' },
+        { role: 'system' as const, content: chatSettings.systemPrompt || '你是一个友好的AI助手。' },
         ...(conversation?.messages || []).map(m => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
@@ -91,9 +88,9 @@ export function useChat(options?: UseChatOptions) {
       // 流式调用 AI
       let fullContent = '';
       for await (const chunk of aiService.chatStream(messages, {
-        model: conversation?.model,
-        temperature: settings.temperature,
-        maxTokens: settings.maxTokens,
+        model: settings.model.defaultModelId,
+        temperature: settings.model.temperature,
+        maxTokens: settings.model.maxTokens,
         signal: abortControllerRef.current.signal,
       })) {
         fullContent += chunk;
@@ -114,7 +111,7 @@ export function useChat(options?: UseChatOptions) {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [currentConversationId, isLoading, settings, createConversation, addMessage, updateMessage]);
+  }, [currentConversationId, isLoading, chatSettings, settings.model, createConversation, addMessage, updateMessage]);
 
   // 停止生成
   const stopGeneration = useCallback(() => {

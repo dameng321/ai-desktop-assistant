@@ -16,6 +16,7 @@ export interface AIProvider {
 }
 
 export interface AIProviderConfig {
+  providerId: string;
   apiKey: string;
   baseUrl?: string;
   model?: string;
@@ -23,6 +24,12 @@ export interface AIProviderConfig {
 
 export enum AIProviderType {
   OpenAI = 'openai',
+  Anthropic = 'anthropic',
+  Google = 'google',
+  DeepSeek = 'deepseek',
+  Moonshot = 'moonshot',
+  Zhipu = 'zhipu',
+  Qwen = 'qwen',
   Ollama = 'ollama',
   Custom = 'custom',
 }

@@ -1,12 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { UserSettings } from '@/types';
+import type { UserSettings, ModelProvider } from '@/types';
+import { getDefaultProviders } from '@/lib/providers';
 
 interface SettingsState {
   settings: UserSettings;
   updateSettings: (settings: Partial<UserSettings>) => void;
   updateGeneral: (general: Partial<UserSettings['general']>) => void;
   updateModel: (model: Partial<UserSettings['model']>) => void;
+  updateProvider: (providerId: string, updates: Partial<ModelProvider>) => void;
+  addCustomProvider: (provider: ModelProvider) => void;
+  removeProvider: (providerId: string) => void;
+  setActiveProvider: (providerId: string) => void;
   reset: () => void;
 }
 
@@ -19,9 +24,9 @@ const defaultSettings: UserSettings = {
     closeBehavior: 'minimize',
   },
   model: {
-    provider: 'openai',
-    model: 'gpt-4-turbo-preview',
-    apiKey: '',
+    providers: getDefaultProviders(),
+    activeProviderId: 'openai',
+    defaultModelId: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 4096,
   },
@@ -82,6 +87,64 @@ export const useSettingsStore = create<SettingsState>()(
         }));
       },
       
+      updateProvider: (providerId, updates) => {
+        set(state => ({
+          settings: {
+            ...state.settings,
+            model: {
+              ...state.settings.model,
+              providers: state.settings.model.providers.map(p =>
+                p.id === providerId ? { ...p, ...updates } : p
+              ),
+            },
+          },
+        }));
+      },
+      
+      addCustomProvider: (provider) => {
+        set(state => ({
+          settings: {
+            ...state.settings,
+            model: {
+              ...state.settings.model,
+              providers: [...state.settings.model.providers, provider],
+            },
+          },
+        }));
+      },
+      
+      removeProvider: (providerId) => {
+        set(state => {
+          const providers = state.settings.model.providers.filter(p => p.id !== providerId);
+          const activeProviderId = state.settings.model.activeProviderId === providerId
+            ? providers[0]?.id || 'openai'
+            : state.settings.model.activeProviderId;
+          
+          return {
+            settings: {
+              ...state.settings,
+              model: {
+                ...state.settings.model,
+                providers,
+                activeProviderId,
+              },
+            },
+          };
+        });
+      },
+      
+      setActiveProvider: (providerId) => {
+        set(state => ({
+          settings: {
+            ...state.settings,
+            model: {
+              ...state.settings.model,
+              activeProviderId: providerId,
+            },
+          },
+        }));
+      },
+      
       reset: () => {
         set({ settings: defaultSettings });
       },
@@ -89,6 +152,18 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'settings-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        settings: {
+          ...state.settings,
+          model: {
+            ...state.settings.model,
+            providers: state.settings.model.providers.map(p => ({
+              ...p,
+              apiKey: p.apiKey,
+            })),
+          },
+        },
+      }),
     }
   )
 );
