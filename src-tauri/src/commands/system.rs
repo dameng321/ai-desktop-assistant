@@ -1,4 +1,4 @@
-use crate::models::SystemInfo;
+use crate::models::{SystemInfo, UserPaths};
 use std::env;
 use tauri::command;
 
@@ -54,4 +54,35 @@ pub async fn open_path(path: String) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[command]
+pub async fn get_user_paths() -> Result<UserPaths, String> {
+    let home = dirs::home_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| String::new());
+
+    let desktop = dirs::desktop_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| home.clone());
+
+    let documents = dirs::document_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| home.clone());
+
+    let downloads = dirs::download_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| home.clone());
+
+    let pictures = dirs::picture_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| home.clone());
+
+    Ok(UserPaths {
+        home,
+        desktop,
+        documents,
+        downloads,
+        pictures,
+    })
 }

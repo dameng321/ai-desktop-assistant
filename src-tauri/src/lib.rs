@@ -30,6 +30,7 @@ pub fn run() {
             search_files,
             // 系统操作
             get_system_info,
+            get_user_paths,
             open_path,
             // 应用操作
             list_apps,

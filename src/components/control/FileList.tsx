@@ -114,7 +114,7 @@ export function FileList({
               </td>
               <td className="px-4 py-2">
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                  {!file.is_dir && file.name !== '..' && (
+                  {file.name !== '..' && (
                     <>
                       <button
                         onClick={e => {
@@ -132,7 +132,8 @@ export function FileList({
                       <button
                         onClick={e => {
                           e.stopPropagation();
-                          if (confirm('确定删除此文件？')) {
+                          const msg = file.is_dir ? '确定删除此文件夹？' : '确定删除此文件？';
+                          if (confirm(msg)) {
                             onDelete(file);
                           }
                         }}

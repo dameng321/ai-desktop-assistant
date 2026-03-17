@@ -25,8 +25,10 @@ pub struct SystemInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SearchResult {
-    pub path: String,
-    pub name: String,
-    pub is_dir: bool,
+pub struct UserPaths {
+    pub home: String,
+    pub desktop: String,
+    pub documents: String,
+    pub downloads: String,
+    pub pictures: String,
 }

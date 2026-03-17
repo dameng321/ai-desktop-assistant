@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFileManager } from '@/hooks';
 import { Breadcrumb } from './Breadcrumb';
 import { FileList } from './FileList';
 import { Button, Input } from '@/components/ui';
-import { systemService } from '@/services/api';
+import { systemService, type UserPaths } from '@/services/api';
 
 export function FileManager() {
   const {
@@ -27,6 +27,13 @@ export function FileManager() {
 
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [userPaths, setUserPaths] = useState<UserPaths | null>(null);
+
+  useEffect(() => {
+    systemService.getUserPaths()
+      .then(setUserPaths)
+      .catch(err => console.error('获取用户路径失败:', err));
+  }, []);
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -45,13 +52,12 @@ export function FileManager() {
     }
   };
 
-  // 快捷路径
-  const quickPaths = [
-    { name: '桌面', path: '' },
-    { name: '文档', path: '' },
-    { name: '下载', path: '' },
-    { name: '图片', path: '' },
-  ];
+  const quickPaths = userPaths ? [
+    { name: '桌面', path: userPaths.desktop, icon: '🖥️' },
+    { name: '文档', path: userPaths.documents, icon: '📄' },
+    { name: '下载', path: userPaths.downloads, icon: '📥' },
+    { name: '图片', path: userPaths.pictures, icon: '🖼️' },
+  ] : [];
 
   return (
     <div className="flex flex-col h-full">
@@ -141,12 +147,14 @@ export function FileManager() {
             {quickPaths.map(p => (
               <button
                 key={p.name}
-                className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-accent text-left"
+                onClick={() => listFiles(p.path)}
+                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent text-left transition-colors"
               >
-                <svg className="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                </svg>
-                <span className="font-medium">{p.name}</span>
+                <span className="text-2xl">{p.icon}</span>
+                <div>
+                  <span className="font-medium">{p.name}</span>
+                  <p className="text-xs text-muted-foreground truncate max-w-32">{p.path}</p>
+                </div>
               </button>
             ))}
           </div>

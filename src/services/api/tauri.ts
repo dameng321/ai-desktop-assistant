@@ -21,6 +21,14 @@ export interface SystemInfo {
   memory: number;
 }
 
+export interface UserPaths {
+  home: string;
+  desktop: string;
+  documents: string;
+  downloads: string;
+  pictures: string;
+}
+
 // 文件操作
 export const fileService = {
   async listFiles(path: string): Promise<FileItem[]> {
@@ -71,6 +79,10 @@ export const appService = {
 export const systemService = {
   async getSystemInfo(): Promise<SystemInfo> {
     return invoke<SystemInfo>('get_system_info');
+  },
+
+  async getUserPaths(): Promise<UserPaths> {
+    return invoke<UserPaths>('get_user_paths');
   },
 
   async openPath(path: string): Promise<void> {
