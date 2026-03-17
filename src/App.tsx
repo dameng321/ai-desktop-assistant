@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useChat } from '@/hooks';
-import { ChatWindow } from '@/components/chat';
+import { ChatWindow, ConversationItem } from '@/components/chat';
 import { SettingsPage } from '@/components/settings';
 import { Button } from '@/components/ui';
-import { cn } from '@/lib';
 
 type View = 'chat' | 'settings';
 
@@ -14,6 +13,8 @@ function App() {
     currentConversationId,
     setCurrentConversation,
     newConversation,
+    deleteConversation,
+    updateConversationTitle,
   } = useChat();
 
   return (
@@ -42,21 +43,17 @@ function App() {
             </p>
           )}
           {conversations.map(conv => (
-            <button
+            <ConversationItem
               key={conv.id}
-              onClick={() => {
+              conversation={conv}
+              isActive={conv.id === currentConversationId && view === 'chat'}
+              onSelect={() => {
                 setCurrentConversation(conv.id);
                 setView('chat');
               }}
-              className={cn(
-                "w-full text-left px-3 py-2 rounded-md text-sm truncate mb-1",
-                conv.id === currentConversationId && view === 'chat'
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
-              )}
-            >
-              {conv.title}
-            </button>
+              onDelete={() => deleteConversation(conv.id)}
+              onRename={title => updateConversationTitle(conv.id, title)}
+            />
           ))}
         </nav>
 
