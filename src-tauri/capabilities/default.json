@@ -9,6 +9,8 @@
     "core:default",
     "dialog:default",
     "shell:allow-open",
-    "clipboard-manager:default"
+    "clipboard-manager:default",
+    "fs:default",
+    "fs:allow-save"
   ]
 }
