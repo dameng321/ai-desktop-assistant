@@ -19,6 +19,8 @@ export function useChat(options?: UseChatOptions) {
     addMessage,
     updateMessage,
     setCurrentConversation,
+    deleteConversation,
+    updateConversationTitle,
   } = useChatStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -149,5 +151,7 @@ export function useChat(options?: UseChatOptions) {
     conversations,
     currentConversationId,
     setCurrentConversation,
+    deleteConversation,
+    updateConversationTitle,
   };
 }
