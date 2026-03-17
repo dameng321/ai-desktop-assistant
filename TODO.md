@@ -196,6 +196,8 @@
 - 配置前端开发环境
 - 实现基础对话界面骨架
 - 添加全局中文回复规则
+- 初始化 Git 仓库并推送到 GitHub
+- **仓库地址**: https://github.com/dameng321/ai-desktop-assistant
 
 ---
 
@@ -203,7 +205,7 @@
 
 1. **克隆项目**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/dameng321/ai-desktop-assistant.git
    cd ai-desktop-assistant
    ```
 
