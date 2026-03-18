@@ -118,6 +118,12 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
       return;
     }
     
+    const openaiCompatibleProviders = ['openai', 'deepseek', 'moonshot', 'ollama', 'qwen'];
+    if (!openaiCompatibleProviders.includes(activeProvider.id) && !activeProvider.id.startsWith('custom-')) {
+      showToast('Embeddings 仅支持 OpenAI 兼容的 API（OpenAI、DeepSeek、Moonshot、Ollama、Qwen）', 'error');
+      return;
+    }
+    
     setIsGeneratingEmbeddings(true);
     setUploadProgress('正在生成向量...');
     

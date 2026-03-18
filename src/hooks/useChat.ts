@@ -102,23 +102,28 @@ export function useChat() {
       // 知识库检索 (RAG)
       let ragContext = '';
       if (activeKnowledgeBaseId && activeProvider?.apiKey && activeProvider?.baseUrl) {
-        try {
-          const chunks = await knowledgeService.searchSemantic(
-            activeKnowledgeBaseId,
-            content.trim(),
-            activeProvider.baseUrl,
-            activeProvider.apiKey,
-            settings.model?.embeddingModel || 'text-embedding-3-small',
-            3
-          );
-          
-          if (chunks.length > 0) {
-            ragContext = '\n\n【参考知识】\n' + chunks.map((c, i) => 
-              `[${i + 1}] ${c.content}`
-            ).join('\n\n') + '\n';
+        const openaiCompatibleProviders = ['openai', 'deepseek', 'moonshot', 'ollama', 'qwen'];
+        const isCompatible = openaiCompatibleProviders.includes(activeProvider.id) || activeProvider.id.startsWith('custom-');
+        
+        if (isCompatible) {
+          try {
+            const chunks = await knowledgeService.searchSemantic(
+              activeKnowledgeBaseId,
+              content.trim(),
+              activeProvider.baseUrl,
+              activeProvider.apiKey,
+              settings.model?.embeddingModel || 'text-embedding-3-small',
+              3
+            );
+            
+            if (chunks.length > 0) {
+              ragContext = '\n\n【参考知识】\n' + chunks.map((c, i) => 
+                `[${i + 1}] ${c.content}`
+              ).join('\n\n') + '\n';
+            }
+          } catch (e) {
+            console.warn('知识库检索失败:', e);
           }
-        } catch (e) {
-          console.warn('知识库检索失败:', e);
         }
       }
       
