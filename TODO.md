@@ -201,15 +201,15 @@
 - [ ] 创建 FileManager 组件
 
 #### 应用操作
-- [ ] 创建应用启动命令
-- [ ] 应用列表扫描
-- [ ] 应用关闭命令
-- [ ] 创建 AppLauncher 组件
+- [x] 创建应用启动命令
+- [x] 应用列表扫描
+- [x] 应用关闭命令
+- [x] 创建 AppLauncher 组件
 
 #### 浏览器控制
-- [ ] URL 打开功能
+- [x] URL 打开功能
 - [ ] 网页截图
-- [ ] 创建 BrowserControl 组件
+- [x] 创建 BrowserControl 组件
 
 ---
 
@@ -355,6 +355,25 @@
   - 支持点击选择文件
   - 集成到 DocumentList 组件
 
+### 2026-03-18 (完善)
+- **修复知识库数据字段映射问题**：
+  - Rust 结构体添加 serde(rename_all = "camelCase") 属性
+  - 修复 Document 和 KnowledgeBase 字段序列化
+- **修复数据库迁移问题**：
+  - 添加自动检测并创建缺失的 embedding 列
+- **添加 Toast 提示组件**：
+  - ToastProvider 和 useToast hook
+  - 替代 alert 弹窗
+  - 添加滑入动画效果
+- **优化知识库模块用户体验**：
+  - 有文档时也能继续上传
+  - 更好的上传进度反馈
+  - 错误提示使用 Toast
+- **添加知识库选择器到对话界面**：
+  - KnowledgeBaseSelector 组件
+  - 可选择使用哪个知识库进行 RAG
+  - 显示知识库片段数量
+
 ---
 
 ## 🔄 如何在新电脑上继续开发
@@ -441,6 +460,10 @@
 | `feat(knowledge): 实现 RAG 检索功能` | 向量存储、Embeddings、语义搜索 |
 | `feat(chat): 集成 RAG 到对话` | 知识库检索增强对话 |
 | `feat(knowledge): 完成知识库模块和语音功能` | UploadZone、语音输入、快捷键、唤醒动画 |
+| `fix(knowledge): 修复知识库数据字段映射问题` | snake_case 转 camelCase |
+| `fix(knowledge): 添加数据库迁移修复缺失的 embedding 列` | 自动迁移 |
+| `feat(ui): 添加 Toast 提示组件和优化用户体验` | Toast、上传反馈 |
+| `feat(chat): 添加知识库选择器到对话界面` | RAG 知识库选择 |
 
 ---
 

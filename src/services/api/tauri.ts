@@ -13,6 +13,12 @@ export interface AppInfo {
   path: string;
 }
 
+export interface ProcessInfo {
+  name: string;
+  pid: number;
+  processName: string;
+}
+
 export interface SystemInfo {
   os: string;
   version: string;
@@ -68,6 +74,14 @@ export const appService = {
 
   async openApp(appPath: string): Promise<void> {
     return invoke('open_app', { appPath });
+  },
+
+  async closeApp(processName: string): Promise<void> {
+    return invoke('close_app', { processName });
+  },
+
+  async listRunningProcesses(): Promise<ProcessInfo[]> {
+    return invoke<ProcessInfo[]>('list_running_processes');
   },
 
   async openUrl(url: string): Promise<void> {

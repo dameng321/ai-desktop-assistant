@@ -16,6 +16,15 @@ pub struct AppInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProcessInfo {
+    pub name: String,
+    pub pid: u32,
+    #[serde(rename = "processName")]
+    pub process_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemInfo {
     pub os: String,
     pub version: String,
@@ -25,6 +34,7 @@ pub struct SystemInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserPaths {
     pub home: String,
     pub desktop: String,

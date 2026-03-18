@@ -132,6 +132,8 @@ pub fn run() {
             // 应用操作
             list_apps,
             open_app,
+            close_app,
+            list_running_processes,
             open_url,
             // 知识库操作
             create_knowledge_base,

@@ -1,6 +1,7 @@
 import { useChat } from '@/hooks';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
+import { KnowledgeBaseSelector } from './KnowledgeBaseSelector';
 
 export function ChatWindow() {
   const {
@@ -34,6 +35,9 @@ export function ChatWindow() {
         isStreaming={isLoading} 
         onRegenerate={regenerateMessage}
       />
+
+      {/* 知识库选择器 */}
+      <KnowledgeBaseSelector />
 
       {/* 输入框 */}
       <InputBar

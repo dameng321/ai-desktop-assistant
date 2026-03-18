@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useChat } from '@/hooks';
 import { ChatWindow, ConversationItem } from '@/components/chat';
 import { SettingsPage } from '@/components/settings';
-import { FileManager } from '@/components/control';
+import { FileManager, AppLauncher, BrowserControl } from '@/components/control';
 import { KnowledgePage } from '@/components/knowledge';
 import { Button, ToastProvider } from '@/components/ui';
 import { cn } from '@/lib';
 
-type View = 'chat' | 'files' | 'knowledge' | 'settings';
+type View = 'chat' | 'files' | 'apps' | 'browser' | 'knowledge' | 'settings';
 
 function App() {
   const [view, setView] = useState<View>('chat');
@@ -26,6 +26,10 @@ function App() {
         return <ChatWindow />;
       case 'files':
         return <FileManager />;
+      case 'apps':
+        return <AppLauncher />;
+      case 'browser':
+        return <BrowserControl />;
       case 'knowledge':
         return <KnowledgePage />;
       case 'settings':
@@ -105,6 +109,32 @@ function App() {
               </button>
               
               <button
+                onClick={() => setView('apps')}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm",
+                  view === 'apps' ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                应用管理
+              </button>
+
+              <button
+                onClick={() => setView('browser')}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm",
+                  view === 'browser' ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                浏览器
+              </button>
+              
+              <button
                 onClick={() => setView('knowledge')}
                 className={cn(
                   "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm",
@@ -160,6 +190,18 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               知识库
+            </button>
+            <button
+              onClick={() => setView('apps')}
+              className={cn(
+                "flex-1 flex flex-col items-center gap-1 py-2 rounded-md text-xs",
+                view === 'apps' ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+              )}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+              应用
             </button>
             <button
               onClick={() => setView('files')}
