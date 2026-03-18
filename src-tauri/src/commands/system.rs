@@ -1,6 +1,39 @@
 use crate::models::{SystemInfo, UserPaths};
 use std::env;
-use tauri::command;
+use tauri::{command, Emitter};
+use serde::{Deserialize, Serialize};
+use futures_util::StreamExt;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ChatRequest {
+    model: String,
+    messages: Vec<ChatMessage>,
+    temperature: f32,
+    max_tokens: u32,
+    stream: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatResponse {
+    choices: Vec<ChatChoice>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatChoice {
+    delta: Option<ChatDelta>,
+    message: Option<ChatMessage>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatDelta {
+    content: Option<String>,
+}
 
 #[command]
 pub async fn get_system_info() -> Result<SystemInfo, String> {
@@ -142,4 +175,98 @@ pub async fn test_api_connection(
     } else {
         Err(format!("API 返回错误: {}", response.status()))
     }
+}
+
+#[command]
+pub async fn chat_stream(
+    app: tauri::AppHandle,
+    base_url: String,
+    api_key: String,
+    provider_id: String,
+    model: String,
+    messages: Vec<ChatMessage>,
+    temperature: f32,
+    max_tokens: u32,
+    request_id: String,
+) -> Result<(), String> {
+    let client = reqwest::Client::new();
+    
+    let url = format!("{}/chat/completions", base_url.trim_end_matches('/'));
+    
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert("Content-Type", "application/json".parse().unwrap());
+    
+    if provider_id != "ollama" && !api_key.is_empty() {
+        headers.insert("Authorization", format!("Bearer {}", api_key).parse().unwrap());
+    }
+    
+    let request = ChatRequest {
+        model,
+        messages,
+        temperature,
+        max_tokens,
+        stream: true,
+    };
+    
+    let response = client
+        .post(&url)
+        .headers(headers)
+        .json(&request)
+        .timeout(std::time::Duration::from_secs(120))
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {}", e))?;
+    
+    if !response.status().is_success() {
+        let error_text = response.text().await.unwrap_or_else(|_| "未知错误".to_string());
+        return Err(format!("API 错误: {}", error_text));
+    }
+    
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+    
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = match chunk_result {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = app.emit(&format!("chat-error-{}", request_id), e.to_string());
+                break;
+            }
+        };
+        
+        let text = String::from_utf8_lossy(&chunk);
+        buffer.push_str(&text);
+        
+        while let Some(newline_pos) = buffer.find('\n') {
+            let line = buffer[..newline_pos].to_string();
+            buffer = buffer[newline_pos + 1..].to_string();
+            
+            let line = line.trim();
+            if line.is_empty() || line == "data: [DONE]" {
+                continue;
+            }
+            
+            if line.starts_with("data: ") {
+                let json_str = &line[6..];
+                if let Ok(data) = serde_json::from_str::<ChatResponse>(json_str) {
+                    if let Some(choice) = data.choices.first() {
+                        if let Some(delta) = &choice.delta {
+                            if let Some(content) = &delta.content {
+                                let _ = app.emit(&format!("chat-chunk-{}", request_id), content);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    let _ = app.emit(&format!("chat-done-{}", request_id), ());
+    Ok(())
+}
+
+#[command]
+pub async fn chat_cancel(request_id: String) -> Result<(), String> {
+    // TODO: 实现取消功能
+    Ok(())
 }

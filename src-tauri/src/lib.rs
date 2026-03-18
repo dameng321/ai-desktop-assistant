@@ -97,6 +97,8 @@ pub fn run() {
             get_user_paths,
             open_path,
             test_api_connection,
+            chat_stream,
+            chat_cancel,
             // 应用操作
             list_apps,
             open_app,
