@@ -3,7 +3,7 @@ import { useFileManager } from '@/hooks';
 import { Breadcrumb } from './Breadcrumb';
 import { FileList } from './FileList';
 import { Button, Input, useToast } from '@/components/ui';
-import { systemService, type UserPaths } from '@/services/api';
+import { systemService, type UserPaths, type FileItem } from '@/services/api';
 
 export function FileManager() {
   const { showToast } = useToast();
@@ -63,14 +63,14 @@ export function FileManager() {
   ] : [];
 
   const handleDeleteFile = async (file: { name: string; is_dir: boolean; path: string }) => {
-    const success = await deleteFile(file as any);
+    const success = await deleteFile(file as FileItem);
     if (success) {
       showToast(`${file.is_dir ? '文件夹' : '文件'} "${file.name}" 已删除`, 'success');
     }
   };
 
   const handleRenameFile = async (file: { name: string; path: string }, newName: string) => {
-    const success = await renameFile(file as any, newName);
+    const success = await renameFile(file as FileItem, newName);
     if (success) {
       showToast(`已重命名为 "${newName}"`, 'success');
     }

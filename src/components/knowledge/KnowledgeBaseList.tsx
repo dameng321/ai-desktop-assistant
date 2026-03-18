@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button, Input } from '@/components/ui';
-import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useKnowledge } from '@/hooks';
 import { knowledgeService } from '@/services/api/knowledge';
-import type { KnowledgeBase, Document } from '@/types';
+import type { KnowledgeBase } from '@/types';
 
 interface KnowledgeBaseListProps {
   onSelect?: (kb: KnowledgeBase) => void;
@@ -13,7 +12,6 @@ export function KnowledgeBaseList({ onSelect }: KnowledgeBaseListProps) {
   const {
     activeKnowledgeBaseId,
     setActiveKnowledgeBase,
-    formatFileSize,
   } = useKnowledge();
 
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
