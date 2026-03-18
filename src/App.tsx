@@ -4,7 +4,7 @@ import { ChatWindow, ConversationItem } from '@/components/chat';
 import { SettingsPage } from '@/components/settings';
 import { FileManager } from '@/components/control';
 import { KnowledgePage } from '@/components/knowledge';
-import { Button } from '@/components/ui';
+import { Button, ToastProvider } from '@/components/ui';
 import { cn } from '@/lib';
 
 type View = 'chat' | 'files' | 'knowledge' | 'settings';
@@ -34,7 +34,8 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <ToastProvider>
+      <div className="flex h-screen bg-background text-foreground">
       {/* 侧边栏 */}
       <aside className="w-64 border-r border-border flex flex-col bg-muted/30">
         {/* 标题 */}
@@ -193,7 +194,8 @@ function App() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {renderMainContent()}
       </main>
-    </div>
+      </div>
+    </ToastProvider>
   );
 }
 

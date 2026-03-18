@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui';
+import { Button, useToast } from '@/components/ui';
 import { useKnowledge } from '@/hooks';
 import { useSettingsStore } from '@/stores';
 import { knowledgeService } from '@/services/api/knowledge';
@@ -14,9 +14,11 @@ interface DocumentListProps {
 export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
   const { getFileIcon, formatFileSize } = useKnowledge();
   const { settings } = useSettingsStore();
+  const { showToast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [showUploadZone, setShowUploadZone] = useState(false);
   const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -46,8 +48,12 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
     
     setIsUploading(true);
     setUploadProgress('');
+    setShowUploadZone(false);
     
     try {
+      let successCount = 0;
+      let errorCount = 0;
+      
       for (const filePath of filePaths) {
         try {
           const filename = filePath.split(/[/\\]/).pop() || 'unknown';
@@ -63,6 +69,7 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
             setDocuments(prev => prev.map(d => 
               d.id === doc.id ? { ...d, status: 'ready' } : d
             ));
+            successCount++;
           } catch (parseErr) {
             setDocuments(prev => prev.map(d => 
               d.id === doc.id ? { 
@@ -71,19 +78,29 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
                 error: parseErr instanceof Error ? parseErr.message : '解析失败' 
               } : d
             ));
+            errorCount++;
           }
         } catch (err) {
           console.error('处理文件失败:', err);
+          errorCount++;
         }
       }
       
       setUploadProgress('');
+      
+      if (successCount > 0) {
+        showToast(`成功处理 ${successCount} 个文档`, 'success');
+      }
+      if (errorCount > 0) {
+        showToast(`${errorCount} 个文档处理失败`, 'error');
+      }
     } catch (err) {
       console.error('上传失败:', err);
+      showToast('上传失败', 'error');
     } finally {
       setIsUploading(false);
     }
-  }, [knowledgeBase.id]);
+  }, [knowledgeBase.id, showToast]);
 
   const handleDelete = async (docId: string) => {
     try {
@@ -97,7 +114,7 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
 
   const handleGenerateEmbeddings = async () => {
     if (!activeProvider?.apiKey || !activeProvider?.baseUrl) {
-      alert('请先在设置中配置 API Key');
+      showToast('请先在设置中配置 API Key', 'error');
       return;
     }
     
@@ -111,13 +128,13 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
         activeProvider.apiKey,
         settings.model?.embeddingModel || 'text-embedding-3-small'
       );
-      setUploadProgress(`已生成 ${count} 个向量`);
-      setTimeout(() => setUploadProgress(''), 3000);
+      showToast(`已生成 ${count} 个向量`, 'success');
     } catch (err) {
       console.error('生成向量失败:', err);
-      setUploadProgress('生成向量失败');
+      showToast('生成向量失败: ' + (err instanceof Error ? err.message : '未知错误'), 'error');
     } finally {
       setIsGeneratingEmbeddings(false);
+      setUploadProgress('');
     }
   };
 
@@ -157,6 +174,13 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowUploadZone(true)} 
+            disabled={isUploading}
+          >
+            上传文档
+          </Button>
           <Button 
             variant="outline" 
             onClick={handleGenerateEmbeddings} 
@@ -247,6 +271,20 @@ export function DocumentList({ knowledgeBase, onBack }: DocumentListProps) {
                 onClick={() => handleDelete(deleteConfirmId)}
               >
                 删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUploadZone && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-lg mx-4 shadow-lg w-full">
+            <h3 className="text-lg font-semibold mb-4">上传文档</h3>
+            <UploadZone onUpload={handleUpload} disabled={isUploading} />
+            <div className="flex justify-end mt-4">
+              <Button variant="outline" onClick={() => setShowUploadZone(false)}>
+                关闭
               </Button>
             </div>
           </div>
