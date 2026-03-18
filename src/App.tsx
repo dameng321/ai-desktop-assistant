@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { useChat } from '@/hooks';
+import { useSettingsStore } from '@/stores';
 import { ChatWindow, ConversationItem } from '@/components/chat';
 import { SettingsPage } from '@/components/settings';
 import { FileManager, AppLauncher, BrowserControl } from '@/components/control';
 import { KnowledgePage } from '@/components/knowledge';
+import { Avatar } from '@/components/avatar';
 import { Button, ToastProvider } from '@/components/ui';
+import { AVATAR_PRESETS } from '@/lib/avatars';
 import { cn } from '@/lib';
 
 type View = 'chat' | 'files' | 'apps' | 'browser' | 'knowledge' | 'settings';
 
 function App() {
   const [view, setView] = useState<View>('chat');
+  const { settings } = useSettingsStore();
   const {
     conversations,
     currentConversationId,
@@ -19,6 +23,9 @@ function App() {
     deleteConversation,
     updateConversationTitle,
   } = useChat();
+
+  const currentAvatar = AVATAR_PRESETS.find(p => p.id === settings.avatar?.id);
+  const avatarEmoji = currentAvatar?.emoji || '🤖';
 
   const renderMainContent = () => {
     switch (view) {
@@ -44,7 +51,10 @@ function App() {
       <aside className="w-64 border-r border-border flex flex-col bg-muted/30">
         {/* 标题 */}
         <div className="p-4 border-b border-border">
-          <h1 className="text-lg font-semibold mb-3">AI 桌面助手</h1>
+          <div className="flex items-center gap-3 mb-3">
+            <Avatar emoji={avatarEmoji} size="md" />
+            <h1 className="text-lg font-semibold">AI 桌面助手</h1>
+          </div>
           
           {/* 对话功能按钮 */}
           {view === 'chat' && (

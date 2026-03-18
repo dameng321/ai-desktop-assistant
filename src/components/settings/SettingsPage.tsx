@@ -5,12 +5,14 @@ import { ModelSettings } from './ModelSettings';
 import { GeneralSettings } from './GeneralSettings';
 import { ShortcutSettings } from './ShortcutSettings';
 import { VoiceSettings } from './VoiceSettings';
+import { AvatarSettings } from './AvatarSettings';
 
-type SettingsTab = 'general' | 'model' | 'voice' | 'shortcuts' | 'privacy';
+type SettingsTab = 'general' | 'model' | 'avatar' | 'voice' | 'shortcuts' | 'privacy';
 
 const tabs: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '通用' },
   { id: 'model', label: '模型' },
+  { id: 'avatar', label: '形象' },
   { id: 'voice', label: '语音' },
   { id: 'shortcuts', label: '快捷键' },
   { id: 'privacy', label: '隐私' },
@@ -35,6 +37,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         return (
           <SettingsLayout title="模型设置" description="配置 AI 模型和 API">
             <ModelSettings />
+          </SettingsLayout>
+        );
+      case 'avatar':
+        return (
+          <SettingsLayout title="形象设置" description="配置 AI 助手的显示形象">
+            <AvatarSettings />
           </SettingsLayout>
         );
       case 'voice':
