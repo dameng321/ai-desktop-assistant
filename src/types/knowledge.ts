@@ -4,17 +4,19 @@ export interface KnowledgeBase {
   description?: string;
   createdAt: number;
   updatedAt: number;
-  documents: Document[];
-  stats: KnowledgeBaseStats;
+  documentCount: number;
+  chunkCount: number;
 }
 
 export interface Document {
   id: string;
+  kbId?: string;
   filename: string;
-  fileType: string;
-  fileSize: number;
-  status: 'pending' | 'processing' | 'ready' | 'error';
-  createdAt: number;
+  fileType?: string;
+  fileSize?: number;
+  filePath?: string;
+  status: string;
+  createdAt?: number;
   error?: string;
 }
 
@@ -27,9 +29,7 @@ export interface KnowledgeBaseStats {
 export interface RetrievedChunk {
   content: string;
   score: number;
-  metadata: {
-    documentId: string;
-    filename: string;
-    page?: number;
-  };
+  documentId: string;
+  filename: string;
+  chunkIndex: number;
 }
