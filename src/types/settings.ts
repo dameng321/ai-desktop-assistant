@@ -3,6 +3,7 @@ export interface UserSettings {
   model: ModelSettings;
   voice: VoiceSettings;
   avatar: AvatarSettings;
+  pet: PetSettings;
   shortcuts: Record<string, string>;
   privacy: PrivacySettings;
   permissions: PermissionSettings;
@@ -55,6 +56,11 @@ export interface AvatarSettings {
   type: 'static' | 'live2d' | 'realistic';
   id: string;
   customUrl?: string;
+}
+
+export interface PetSettings {
+  enabled: boolean;
+  position?: { x: number; y: number };
 }
 
 export interface PrivacySettings {

@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "AI桌面助手",
         "width": 1200,
         "height": 800,
@@ -20,6 +21,19 @@
         "resizable": true,
         "fullscreen": false,
         "center": true
+      },
+      {
+        "label": "pet",
+        "title": "AI助手桌宠",
+        "width": 200,
+        "height": 200,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "visible": false,
+        "url": "/pet"
       }
     ],
     "security": {

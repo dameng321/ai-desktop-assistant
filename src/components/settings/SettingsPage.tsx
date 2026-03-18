@@ -6,14 +6,16 @@ import { GeneralSettings } from './GeneralSettings';
 import { ShortcutSettings } from './ShortcutSettings';
 import { VoiceSettings } from './VoiceSettings';
 import { AvatarSettings } from './AvatarSettings';
+import { PetSettings } from './PetSettings';
 
-type SettingsTab = 'general' | 'model' | 'avatar' | 'voice' | 'shortcuts' | 'privacy';
+type SettingsTab = 'general' | 'model' | 'avatar' | 'voice' | 'pet' | 'shortcuts' | 'privacy';
 
 const tabs: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '通用' },
   { id: 'model', label: '模型' },
   { id: 'avatar', label: '形象' },
   { id: 'voice', label: '语音' },
+  { id: 'pet', label: '桌宠' },
   { id: 'shortcuts', label: '快捷键' },
   { id: 'privacy', label: '隐私' },
 ];
@@ -49,6 +51,12 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
         return (
           <SettingsLayout title="语音设置" description="配置语音输入和输出">
             <VoiceSettings />
+          </SettingsLayout>
+        );
+      case 'pet':
+        return (
+          <SettingsLayout title="桌宠设置" description="配置桌面宠物助手">
+            <PetSettings />
           </SettingsLayout>
         );
       case 'shortcuts':

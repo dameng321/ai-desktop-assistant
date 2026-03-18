@@ -42,7 +42,10 @@ const defaultSettings: UserSettings = {
   },
   avatar: {
     type: 'static',
-    id: 'default',
+    id: 'robot',
+  },
+  pet: {
+    enabled: false,
   },
   shortcuts: {
     wakeUp: 'Ctrl+Shift+A',
