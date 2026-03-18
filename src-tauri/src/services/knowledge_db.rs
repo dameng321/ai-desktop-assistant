@@ -70,6 +70,17 @@ impl KnowledgeDatabase {
             "#,
         )?;
         
+        // 迁移：添加缺失的列
+        let columns: Vec<(String, String)> = conn
+            .prepare("SELECT name, type FROM pragma_table_info('text_chunks')")?
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<SqliteResult<Vec<_>>>()?;
+        
+        let has_embedding = columns.iter().any(|(name, _)| name == "embedding");
+        if !has_embedding {
+            conn.execute("ALTER TABLE text_chunks ADD COLUMN embedding BLOB", [])?;
+        }
+        
         Ok(())
     }
     
