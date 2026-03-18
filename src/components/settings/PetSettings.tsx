@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { PhysicalSize } from '@tauri-apps/api/dpi';
 import { emit } from '@tauri-apps/api/event';
 import { Button, useToast } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
@@ -9,10 +8,10 @@ import { AVATAR_PRESETS } from '@/lib/avatars';
 
 type PetSize = 'small' | 'medium' | 'large';
 
-const PET_SIZES: { id: PetSize; label: string; size: number }[] = [
-  { id: 'small', label: '小', size: 100 },
-  { id: 'medium', label: '中', size: 150 },
-  { id: 'large', label: '大', size: 200 },
+const PET_SIZES: { id: PetSize; label: string }[] = [
+  { id: 'small', label: '小' },
+  { id: 'medium', label: '中' },
+  { id: 'large', label: '大' },
 ];
 
 export function PetSettings() {
@@ -51,7 +50,6 @@ export function PetSettings() {
   const togglePet = useCallback(async () => {
     try {
       let petWindow = await WebviewWindow.getByLabel('pet');
-      const sizeConfig = PET_SIZES.find(s => s.id === petSize) ?? PET_SIZES[1];
       
       if (!petWindow) {
         petWindow = new WebviewWindow('pet', {
@@ -60,8 +58,8 @@ export function PetSettings() {
           transparent: true,
           alwaysOnTop: true,
           skipTaskbar: true,
-          width: sizeConfig.size,
-          height: sizeConfig.size,
+          width: 300,
+          height: 300,
         });
         await petWindow.show();
         setIsPetVisible(true);
@@ -83,22 +81,11 @@ export function PetSettings() {
       const message = e instanceof Error ? e.message : String(e);
       showToast(`操作失败: ${message}`, 'error');
     }
-  }, [showToast, petSize]);
+  }, [showToast]);
 
   const handleSizeChange = async (size: PetSize) => {
     updateSettings({ pet: { ...settings.pet, size } });
-    
-    const sizeConfig = PET_SIZES.find(s => s.id === size);
-    if (sizeConfig) {
-      try {
-        const petWindow = await WebviewWindow.getByLabel('pet');
-        if (petWindow) {
-          await petWindow.setSize(new PhysicalSize(sizeConfig.size, sizeConfig.size));
-        }
-      } catch (e) {
-        console.error('调整窗口大小失败:', e);
-      }
-    }
+    await notifyPetWindow();
   };
 
   const handleAvatarChange = async (avatarId: string) => {

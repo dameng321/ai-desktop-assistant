@@ -10,9 +10,9 @@ interface DesktopPetProps {
 }
 
 const PET_SIZE_MAP = {
-  small: { avatar: 'md' as const, container: 80 },
-  medium: { avatar: 'lg' as const, container: 120 },
-  large: { avatar: 'xl' as const, container: 160 },
+  small: 'md' as const,
+  medium: 'lg' as const,
+  large: 'xl' as const,
 };
 
 export function DesktopPet({ onChat }: DesktopPetProps) {
@@ -38,7 +38,7 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
 
   const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
   const petSize = settings.pet?.size ?? 'medium';
-  const sizeConfig = PET_SIZE_MAP[petSize];
+  const avatarSize = PET_SIZE_MAP[petSize];
 
   const currentAvatar = AVATAR_PRESETS.find(p => p.id === petAvatarId);
   const avatarEmoji = currentAvatar?.emoji || '🤖';
@@ -84,14 +84,11 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    const maxX = window.innerWidth - sizeConfig.container;
-    const maxY = window.innerHeight - sizeConfig.container;
-    
     setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
+      x: Math.max(0, newX),
+      y: Math.max(0, newY),
     });
-  }, [isDragging, dragOffset, sizeConfig.container]);
+  }, [isDragging, dragOffset]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -145,7 +142,7 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
       >
         <Avatar 
           emoji={avatarEmoji} 
-          size={sizeConfig.avatar} 
+          size={avatarSize} 
           animate={isHovering || animation !== 'idle'}
           speaking={animation === 'wave'}
           transparent

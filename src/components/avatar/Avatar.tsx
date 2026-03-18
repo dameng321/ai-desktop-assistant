@@ -40,25 +40,33 @@ export function Avatar({
     };
   }, [speaking, animate]);
 
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-base',
-    md: 'w-10 h-10 text-xl',
-    lg: 'w-14 h-14 text-2xl',
-    xl: 'w-20 h-20 text-4xl',
-  };
+  const sizeClasses = transparent
+    ? {
+        sm: 'text-4xl',
+        md: 'text-5xl',
+        lg: 'text-6xl',
+        xl: 'text-7xl',
+      }
+    : {
+        sm: 'w-8 h-8 text-base',
+        md: 'w-10 h-10 text-xl',
+        lg: 'w-14 h-14 text-2xl',
+        xl: 'w-20 h-20 text-4xl',
+      };
 
   return (
     <div 
       className={cn(
-        sizeClasses[size],
-        'rounded-full',
         'flex items-center justify-center',
         'transition-all duration-200',
         !transparent && [
+          'rounded-full',
+          sizeClasses[size],
           'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent',
           'border-2 border-primary/30',
           'shadow-lg shadow-primary/10',
         ],
+        transparent && sizeClasses[size],
         speaking && animate && [
           'scale-110',
           bounce && '-translate-y-1',
