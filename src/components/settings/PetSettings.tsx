@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { PhysicalSize } from '@tauri-apps/api/dpi';
 import { Button, useToast } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
@@ -83,7 +84,7 @@ export function PetSettings() {
       try {
         const petWindow = await WebviewWindow.getByLabel('pet');
         if (petWindow) {
-          await petWindow.setSize({ width: sizeConfig.size, height: sizeConfig.size });
+          await petWindow.setSize(new PhysicalSize(sizeConfig.size, sizeConfig.size));
         }
       } catch (e) {
         console.error('调整窗口大小失败:', e);

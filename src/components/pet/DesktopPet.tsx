@@ -16,6 +16,7 @@ const PET_SIZE_MAP = {
 
 export function DesktopPet({ onChat }: DesktopPetProps) {
   const { settings } = useSettingsStore();
+  const [, forceUpdate] = useState(0);
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -23,6 +24,16 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [animation, setAnimation] = useState<'idle' | 'wave' | 'jump'>('idle');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'settings-storage') {
+        forceUpdate(n => n + 1);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
   const petSize = settings.pet?.size ?? 'medium';
