@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib';
 
 interface AvatarProps {
   emoji: string;
@@ -15,52 +16,59 @@ export function Avatar({
   speaking = false,
   className = '' 
 }: AvatarProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const animationRef = useRef<number | null>(null);
+  const [bounce, setBounce] = useState(false);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (speaking && animate) {
-      setIsAnimating(true);
-      const animateAvatar = () => {
-        setIsAnimating(prev => !prev);
-        animationRef.current = window.setTimeout(animateAvatar, 300);
-      };
-      animationRef.current = window.setTimeout(animateAvatar, 300);
+      intervalRef.current = window.setInterval(() => {
+        setBounce(prev => !prev);
+      }, 400);
     } else {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
-      setIsAnimating(false);
+      setBounce(false);
     }
 
     return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
   }, [speaking, animate]);
 
   const sizeClasses = {
-    sm: 'w-8 h-8 text-lg',
-    md: 'w-12 h-12 text-2xl',
-    lg: 'w-16 h-16 text-3xl',
-    xl: 'w-24 h-24 text-5xl',
+    sm: 'w-8 h-8 text-base',
+    md: 'w-10 h-10 text-xl',
+    lg: 'w-14 h-14 text-2xl',
+    xl: 'w-20 h-20 text-4xl',
   };
 
   return (
     <div 
-      className={`
-        ${sizeClasses[size]}
-        rounded-full bg-gradient-to-br from-primary/20 to-primary/5
-        flex items-center justify-center
-        border-2 border-primary/30
-        shadow-lg shadow-primary/10
-        transition-all duration-300
-        ${isAnimating ? 'scale-110 -translate-y-0.5' : 'scale-100'}
-        ${className}
-      `}
+      className={cn(
+        sizeClasses[size],
+        'rounded-full',
+        'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent',
+        'flex items-center justify-center',
+        'border-2 border-primary/30',
+        'shadow-lg shadow-primary/10',
+        'transition-all duration-200',
+        speaking && animate && [
+          'scale-110',
+          bounce && '-translate-y-1',
+          !bounce && 'translate-y-0.5',
+        ],
+        className
+      )}
     >
-      <span className={isAnimating ? 'animate-bounce' : ''}>{emoji}</span>
+      <span className={cn(
+        'transition-transform duration-200',
+        speaking && animate && bounce && 'scale-110'
+      )}>
+        {emoji}
+      </span>
     </div>
   );
 }

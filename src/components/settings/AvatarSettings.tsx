@@ -4,6 +4,7 @@ import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
 import { AVATAR_PRESETS } from '@/lib/avatars';
 import { Avatar } from '@/components/avatar';
+import { cn } from '@/lib';
 
 export function AvatarSettings() {
   const { settings, updateSettings } = useSettingsStore();
@@ -46,20 +47,23 @@ export function AvatarSettings() {
       </SettingsSection>
 
       <SettingsSection title="预设形象" description="选择一个预设的 AI 形象">
-        <div className="grid grid-cols-4 gap-3 py-2">
+        <div className="grid grid-cols-5 gap-2 py-2 max-h-80 overflow-y-auto">
           {AVATAR_PRESETS.map(preset => (
             <button
               key={preset.id}
               onClick={() => handleSelectPreset(preset.id)}
-              className={`
-                flex flex-col items-center p-3 rounded-lg border-2 transition-all
-                ${avatar.id === preset.id 
+              className={cn(
+                'flex flex-col items-center p-2 rounded-lg border-2 transition-all',
+                avatar.id === preset.id 
                   ? 'border-primary bg-primary/10' 
-                  : 'border-border hover:border-primary/50 hover:bg-muted/50'}
-              `}
+                  : 'border-border hover:border-primary/50 hover:bg-muted/50'
+              )}
+              title={preset.description}
             >
               <Avatar emoji={preset.emoji} size="md" />
-              <span className="text-xs mt-2 font-medium">{preset.name}</span>
+              <span className="text-xs mt-1 font-medium truncate w-full text-center">
+                {preset.name}
+              </span>
             </button>
           ))}
         </div>
@@ -88,13 +92,15 @@ export function AvatarSettings() {
         <SettingsItem label="静态头像" description="使用 emoji 或图片作为头像">
           <button
             onClick={() => updateSettings({ avatar: { ...avatar, type: 'static' } })}
-            className={`w-12 h-6 rounded-full transition-colors ${
+            className={cn(
+              'w-12 h-6 rounded-full transition-colors',
               avatar.type === 'static' ? 'bg-primary' : 'bg-muted'
-            }`}
+            )}
           >
-            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+            <div className={cn(
+              'w-5 h-5 bg-white rounded-full transition-transform',
               avatar.type === 'static' ? 'translate-x-6' : 'translate-x-0.5'
-            }`} />
+            )} />
           </button>
         </SettingsItem>
         

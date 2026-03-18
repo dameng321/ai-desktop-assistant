@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { cn } from '@/lib';
 import { MarkdownRenderer } from '@/components/common';
+import { Avatar } from '@/components/avatar';
+import { useSettingsStore } from '@/stores';
+import { AVATAR_PRESETS } from '@/lib/avatars';
 import type { Message } from '@/types';
 
 interface MessageItemProps {
@@ -13,6 +16,10 @@ interface MessageItemProps {
 export function MessageItem({ message, isStreaming, isLastAssistant, onRegenerate }: MessageItemProps) {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
+  const { settings } = useSettingsStore();
+
+  const currentAvatar = AVATAR_PRESETS.find(p => p.id === settings.avatar?.id);
+  const avatarEmoji = currentAvatar?.emoji || '🤖';
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(message.content);
@@ -23,10 +30,22 @@ export function MessageItem({ message, isStreaming, isLastAssistant, onRegenerat
   return (
     <div
       className={cn(
-        'flex w-full mb-4',
-        isUser ? 'justify-end' : 'justify-start'
+        'flex w-full mb-4 gap-3',
+        isUser ? 'justify-end flex-row-reverse' : 'justify-start'
       )}
     >
+      {/* 头像 */}
+      {!isUser && (
+        <div className="flex-shrink-0">
+          <Avatar 
+            emoji={avatarEmoji} 
+            size="sm" 
+            animate={isStreaming}
+            speaking={isStreaming}
+          />
+        </div>
+      )}
+
       <div
         className={cn(
           'max-w-[80%] px-4 py-3 rounded-2xl group relative',
