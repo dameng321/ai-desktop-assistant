@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Button, Input } from '@/components/ui';
+import { VoiceInput } from '@/components/voice';
 
 interface InputBarProps {
   onSend: (message: string) => void;
@@ -32,9 +33,16 @@ export function InputBar({
     }
   }, [handleSend]);
 
+  const handleVoiceResult = useCallback((text: string) => {
+    if (text.trim()) {
+      setInput(prev => prev + (prev ? ' ' : '') + text.trim());
+    }
+  }, []);
+
   return (
     <div className="p-4 border-t border-border">
       <div className="flex gap-2">
+        <VoiceInput onResult={handleVoiceResult} disabled={disabled || isLoading} />
         <Input
           value={input}
           onChange={e => setInput(e.target.value)}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Input } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
@@ -16,8 +16,20 @@ export function ModelSettings() {
   const [testResult, setTestResult] = useState<Record<string, 'success' | 'error' | null>>({});
   const [testError, setTestError] = useState<Record<string, string>>({});
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
+  const [isFetchingModels, setIsFetchingModels] = useState<string | null>(null);
+  const [fetchModelsError, setFetchModelsError] = useState<string | null>(null);
 
   const activeProvider = settings.model.providers.find(p => p.id === settings.model.activeProviderId);
+
+  useEffect(() => {
+    if (activeProvider && activeProvider.models.length > 0) {
+      const modelExists = activeProvider.models.some(m => m.id === settings.model.defaultModelId);
+      if (!modelExists) {
+        updateModel({ defaultModelId: activeProvider.models[0].id });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProvider?.id, activeProvider?.models, settings.model.defaultModelId]);
 
   const handleTestConnection = async (provider: ModelProvider) => {
     if (!provider.apiKey && provider.id !== 'ollama') return;
@@ -41,6 +53,47 @@ export function ModelSettings() {
       }));
     } finally {
       setIsTesting(null);
+    }
+  };
+
+  const handleFetchModels = async (provider: ModelProvider) => {
+    setIsFetchingModels(provider.id);
+    setFetchModelsError(null);
+    
+    try {
+      const models = await systemService.fetchModels(
+        provider.baseUrl,
+        provider.apiKey,
+        provider.id
+      );
+      
+      if (models.length === 0) {
+        setFetchModelsError('未找到可用模型');
+        return;
+      }
+      
+      const currentModelIds = provider.models.map(m => m.id);
+      const newModels = models.filter(m => !currentModelIds.includes(m.id));
+      
+      if (newModels.length === 0) {
+        setFetchModelsError('所有模型已添加');
+        return;
+      }
+      
+      const updatedModels = [...provider.models, ...newModels];
+      updateProvider(provider.id, { models: updatedModels });
+      
+      if (settings.model.activeProviderId === provider.id) {
+        const currentDefaultModel = settings.model.defaultModelId;
+        const modelExists = updatedModels.some(m => m.id === currentDefaultModel);
+        if (!modelExists) {
+          updateModel({ defaultModelId: newModels[0].id });
+        }
+      }
+    } catch (err) {
+      setFetchModelsError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsFetchingModels(null);
     }
   };
 
@@ -68,9 +121,13 @@ export function ModelSettings() {
     
     updateProvider(providerId, { models: updatedModels });
     
-    // 如果是第一个模型，自动设为默认模型
-    if (provider.models.length === 0) {
-      updateModel({ defaultModelId: modelId });
+    // 如果当前活跃供应商是这个供应商，且默认模型不在模型列表中，自动设为新添加的模型
+    if (settings.model.activeProviderId === providerId) {
+      const currentDefaultModel = settings.model.defaultModelId;
+      const modelExists = updatedModels.some(m => m.id === currentDefaultModel);
+      if (!modelExists) {
+        updateModel({ defaultModelId: modelId });
+      }
     }
     
     setNewModelInput(prev => ({ ...prev, [providerId]: '' }));
@@ -197,6 +254,13 @@ export function ModelSettings() {
               >
                 {isTesting === activeProvider.id ? '测试中...' : '测试连接'}
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleFetchModels(activeProvider)}
+                disabled={isFetchingModels === activeProvider.id}
+              >
+                {isFetchingModels === activeProvider.id ? '获取中...' : '获取模型列表'}
+              </Button>
             </div>
 
             {testResult[activeProvider.id] && (
@@ -210,18 +274,26 @@ export function ModelSettings() {
                   : `✗ ${testError[activeProvider.id] || '连接失败，请检查配置'}`}
               </div>
             )}
+
+            {fetchModelsError && (
+              <div className="mt-2 text-sm text-red-600">
+                ✗ {fetchModelsError}
+              </div>
+            )}
           </SettingsSection>
 
           <SettingsSection title="模型选择" description="选择默认使用的模型">
             {activeProvider.models.length > 0 ? (
               <SettingsItem label="默认模型" description="对话使用的默认模型">
                 <select
-                  value={settings.model.defaultModelId}
+                  value={activeProvider.models.some(m => m.id === settings.model.defaultModelId) 
+                    ? settings.model.defaultModelId 
+                    : activeProvider.models[0].id}
                   onChange={e => updateModel({ defaultModelId: e.target.value })}
                   className="w-80 h-9 px-3 rounded-md border border-input bg-background text-sm"
                 >
-                  {activeProvider.models.map(model => (
-                    <option key={model.id} value={model.id}>
+                  {activeProvider.models.map((model, index) => (
+                    <option key={`${model.id}-${index}`} value={model.id}>
                       {model.name}
                     </option>
                   ))}
@@ -325,6 +397,29 @@ export function ModelSettings() {
             min={100}
             max={2000000}
           />
+        </SettingsItem>
+
+        <SettingsItem label="上下文窗口" description="保留的对话轮数 (0=不限制)">
+          <Input
+            type="number"
+            value={settings.model.contextWindow ?? 10}
+            onChange={e => updateModel({ contextWindow: parseInt(e.target.value) || 10 })}
+            className="w-32"
+            min={0}
+            max={50}
+          />
+        </SettingsItem>
+
+        <SettingsItem label="上下文策略" description="对话历史的处理方式">
+          <select
+            value={settings.model.contextStrategy ?? 'recent'}
+            onChange={e => updateModel({ contextStrategy: e.target.value as 'recent' | 'smart' | 'full' })}
+            className="w-48 h-9 px-3 rounded-md border border-input bg-background text-sm"
+          >
+            <option value="recent">最近 N 轮</option>
+            <option value="smart">智能保留</option>
+            <option value="full">完整历史</option>
+          </select>
         </SettingsItem>
       </SettingsSection>
     </div>

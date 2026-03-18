@@ -38,6 +38,9 @@ export interface ModelSettings {
   defaultModelId: string;
   temperature: number;
   maxTokens: number;
+  contextWindow: number;
+  contextStrategy: 'recent' | 'smart' | 'full';
+  embeddingModel: string;
 }
 
 export interface VoiceSettings {

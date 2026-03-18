@@ -92,4 +92,8 @@ export const systemService = {
   async testApiConnection(baseUrl: string, apiKey: string, providerId: string): Promise<boolean> {
     return invoke<boolean>('test_api_connection', { baseUrl, apiKey, providerId });
   },
+
+  async fetchModels(baseUrl: string, apiKey: string, providerId: string): Promise<{ id: string; name: string }[]> {
+    return invoke<{ id: string; name: string }[]>('fetch_models', { baseUrl, apiKey, providerId });
+  },
 };

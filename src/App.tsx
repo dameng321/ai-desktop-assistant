@@ -3,10 +3,11 @@ import { useChat } from '@/hooks';
 import { ChatWindow, ConversationItem } from '@/components/chat';
 import { SettingsPage } from '@/components/settings';
 import { FileManager } from '@/components/control';
+import { KnowledgePage } from '@/components/knowledge';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib';
 
-type View = 'chat' | 'files' | 'settings';
+type View = 'chat' | 'files' | 'knowledge' | 'settings';
 
 function App() {
   const [view, setView] = useState<View>('chat');
@@ -25,6 +26,8 @@ function App() {
         return <ChatWindow />;
       case 'files':
         return <FileManager />;
+      case 'knowledge':
+        return <KnowledgePage />;
       case 'settings':
         return <SettingsPage onClose={() => setView('chat')} />;
     }
@@ -101,6 +104,19 @@ function App() {
               </button>
               
               <button
+                onClick={() => setView('knowledge')}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm",
+                  view === 'knowledge' ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+                )}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                知识库
+              </button>
+              
+              <button
                 onClick={() => setView('settings')}
                 className={cn(
                   "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm",
@@ -131,6 +147,18 @@ function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               对话
+            </button>
+            <button
+              onClick={() => setView('knowledge')}
+              className={cn(
+                "flex-1 flex flex-col items-center gap-1 py-2 rounded-md text-xs",
+                view === 'knowledge' ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+              )}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              知识库
             </button>
             <button
               onClick={() => setView('files')}

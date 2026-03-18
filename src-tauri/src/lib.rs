@@ -1,12 +1,16 @@
 mod commands;
 mod models;
+mod services;
 
 use commands::*;
+use services::KnowledgeDatabase;
+use std::sync::Arc;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, WindowEvent,
+    Manager, WindowEvent, State,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,6 +19,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -22,6 +27,30 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
+            }
+
+            // 初始化知识库数据库
+            let db = KnowledgeDatabase::new(app.handle())
+                .expect("Failed to initialize knowledge database");
+            app.manage(Arc::new(db));
+
+            // 注册全局快捷键 (Ctrl+Shift+A)
+            let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyA);
+            
+            let global_shortcut = app.global_shortcut();
+            let app_handle = app.handle().clone();
+            match global_shortcut.on_shortcut(shortcut, move |_app, _shortcut, _event| {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    if window.is_visible().unwrap_or(false) {
+                        let _ = window.hide();
+                    } else {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
+                }
+            }) {
+                Ok(_) => log::info!("全局快捷键 Ctrl+Shift+A 注册成功"),
+                Err(e) => log::warn!("全局快捷键注册失败: {}，可能已被其他程序占用", e),
             }
 
             // 创建托盘菜单
@@ -99,10 +128,22 @@ pub fn run() {
             test_api_connection,
             chat_stream,
             chat_cancel,
+            fetch_models,
             // 应用操作
             list_apps,
             open_app,
             open_url,
+            // 知识库操作
+            create_knowledge_base,
+            list_knowledge_bases,
+            delete_knowledge_base,
+            add_document,
+            list_documents,
+            process_document,
+            delete_document,
+            search_knowledge,
+            generate_embeddings,
+            search_semantic,
         ])
         .run(tauri::generate_context!())
         .expect("启动 Tauri 应用失败");

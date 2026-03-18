@@ -1,6 +1,6 @@
 # AI 桌面助手 - 开发任务追踪
 
-> 最后更新：2026-03-17
+> 最后更新：2026-03-18
 > 版本：v1.0.0-MVP
 
 ## 📊 项目进度概览
@@ -12,7 +12,7 @@
 | 设置中心模块 | ✅ 已完成 | 100% |
 | Tauri 后端 | ✅ 已完成 | 100% |
 | 电脑操控模块 | ✅ 已完成 | 100% |
-| 知识库模块 | 📋 待开始 | 0% |
+| 知识库模块 | ✅ 已完成 | 100% |
 | 微信互联模块 | 📋 待开始 | 0% |
 | 形象声音模块 | 📋 待开始 | 0% |
 
@@ -126,6 +126,15 @@
 - [x] 左键点击托盘显示窗口
 - [x] 关闭窗口时最小化到托盘
 
+### 知识库模块 - 基础功能 (2026-03-18)
+- [x] 创建 `knowledgeStore` (Zustand)
+- [x] 创建 `useKnowledge` Hook
+- [x] 创建 KnowledgeBaseList 组件
+- [x] 创建 DocumentList 组件
+- [x] 创建 KnowledgePage 主页面
+- [x] 集成到 App 导航
+- [x] 文档上传功能（文件选择对话框）
+
 ---
 
 ## 🚧 进行中任务
@@ -141,43 +150,44 @@
 #### 对话核心功能（增强）
 - [x] 消息重新生成
 - [x] 对话导出 (MD/TXT)
-- [ ] 多轮对话上下文管理优化
+- [x] 多轮对话上下文管理优化
 
 #### 语音对话功能
-- [ ] 创建 `useVoice` Hook
-- [ ] 集成语音识别 (Whisper API)
-- [ ] 集成语音合成 (Edge TTS)
-- [ ] 创建 VoiceInput 组件
-- [ ] 语音参数设置
+- [x] 创建 `useVoice` Hook
+- [x] 集成语音识别 (Web Speech API)
+- [x] 集成语音合成 (Web Speech API)
+- [x] 创建 VoiceInput 组件
+- [x] 语音参数设置
 
 #### 快捷唤醒
-- [ ] 全局快捷键注册
-- [ ] 快捷键设置页面
-- [ ] 唤醒动画效果
+- [x] 全局快捷键注册
+- [x] 快捷键设置页面
+- [x] 唤醒动画效果
 
 ---
 
 ### Phase 2: 知识库模块 (V1.0 MVP)
 
 #### 知识库管理
-- [ ] 创建 `useKnowledge` Hook
-- [ ] 创建 KnowledgeService
-- [ ] 知识库 CRUD 操作
-- [ ] 创建 KnowledgeBaseList 组件
-- [ ] 创建 DocumentList 组件
+- [x] 创建 `useKnowledge` Hook
+- [x] 创建 KnowledgeService
+- [x] 知识库 CRUD 操作
+- [x] 创建 KnowledgeBaseList 组件
+- [x] 创建 DocumentList 组件
+- [x] 知识库持久化存储 (SQLite)
 
 #### 文档处理
-- [ ] 文档上传功能
-- [ ] PDF 解析
-- [ ] DOCX 解析
-- [ ] 文本分块
+- [x] 文档上传功能
+- [x] PDF 解析
+- [x] DOCX 解析
+- [x] 文本分块
 - [ ] 创建 UploadZone 组件
 
 #### RAG 检索
-- [ ] 集成向量数据库
-- [ ] 文本向量化 (Embeddings)
-- [ ] 相似度检索
-- [ ] 检索结果注入对话
+- [x] 集成向量数据库（SQLite + 向量存储）
+- [x] 文本向量化 (OpenAI Embeddings API)
+- [x] 语义相似度检索（余弦相似度）
+- [x] 检索结果注入对话 (RAG)
 
 ---
 
@@ -294,6 +304,51 @@
   - 左键点击显示窗口
   - 关闭窗口时最小化到托盘
 
+### 2026-03-18
+- **修复模型配置问题**：
+  - 修复切换供应商时默认模型未更新的问题
+  - 添加自动获取模型列表功能（fetch_models 命令）
+  - 优化模型选择下拉框显示逻辑
+- **开始知识库模块开发**：
+  - 创建 knowledgeStore (Zustand)
+  - 创建 useKnowledge Hook
+  - 创建 KnowledgeBaseList 组件（知识库列表）
+  - 创建 DocumentList 组件（文档列表）
+  - 创建 KnowledgePage 主页面
+  - 集成到 App 导航
+  - 实现文档上传功能（文件选择对话框）
+- **完成 Phase 1 智能对话模块增强**：
+  - 多轮对话上下文管理优化（可配置窗口大小和策略）
+  - 创建 useVoice Hook（语音识别和合成）
+  - 集成 Web Speech API（语音识别和合成）
+  - 创建 VoiceInput 组件（已集成到输入框）
+  - 语音参数设置页面
+  - 全局快捷键注册（Ctrl+Shift+A 唤醒窗口）
+  - 快捷键设置页面
+  - 唤醒动画效果组件
+
+### 2026-03-18 (续)
+- **完善知识库模块**：
+  - 实现 PDF 文档解析（使用 pdf-extract）
+  - 实现 DOCX 文档解析（使用 docx-rs）
+  - 实现 TXT/MD 文档解析
+  - 实现文本分块功能（可配置大小和重叠）
+  - 创建知识库 Tauri 命令（parse_document, get_document_info）
+  - 更新 DocumentList 组件支持真实的文档解析
+  - 创建 knowledgeService 前端服务
+- **实现 RAG 检索功能**：
+  - SQLite 存储向量数据（BLOB 格式）
+  - 实现余弦相似度计算
+  - 集成 OpenAI Embeddings API
+  - 生成文档向量功能
+  - 语义相似度检索
+  - RAG 对话集成（自动检索相关知识注入上下文）
+- **知识库模块完成**：
+  - 知识库 CRUD 操作（创建、列表、删除）
+  - 文档管理（上传、解析、分块、删除）
+  - 向量检索和语义搜索
+  - RAG 对话增强
+
 ---
 
 ## 🔄 如何在新电脑上继续开发
@@ -342,12 +397,12 @@
 
 ## 📌 下一步行动
 
-**当前优先级**: 开始知识库模块开发
+**当前优先级**: 开始 Phase 3 电脑操控模块增强
 
-1. 设计知识库数据模型
-2. 创建知识库管理界面
-3. 实现文档上传功能
-4. 集成向量数据库（可选）
+1. 实现应用启动和关闭功能增强
+2. 实现浏览器控制功能
+3. 实现网页截图功能
+4. 或者开始 Phase 5 形象声音模块
 
 ---
 
@@ -371,6 +426,13 @@
 | `feat(chat): 添加消息重新生成功能` | 重新生成 AI 回复 |
 | `feat(chat): 添加对话导出功能` | 导出为 Markdown/文本 |
 | `feat(tray): 添加系统托盘功能` | 托盘图标、菜单、最小化到托盘 |
+| `fix(model): 修复模型选择问题` | 切换供应商时更新默认模型 |
+| `feat(model): 添加获取模型列表功能` | 自动从 API 获取可用模型 |
+| `feat(knowledge): 创建知识库模块基础功能` | Store、Hook、组件、页面 |
+| `feat(knowledge): 实现文档解析功能` | PDF、DOCX、TXT、MD 解析和分块 |
+| `feat(knowledge): 实现知识库持久化存储` | SQLite 数据库存储 |
+| `feat(knowledge): 实现 RAG 检索功能` | 向量存储、Embeddings、语义搜索 |
+| `feat(chat): 集成 RAG 到对话` | 知识库检索增强对话 |
 
 ---
 

@@ -57,12 +57,14 @@ export class OpenAIProvider implements AIProvider {
       done = true;
     });
 
+    const modelToUse = options?.model || this.model;
+    
     // Start the stream
     invoke('chat_stream', {
       baseUrl: this.baseUrl,
       apiKey: this.apiKey,
       providerId: this.providerId,
-      model: options?.model || this.model,
+      model: modelToUse,
       messages: messages.map(m => ({ role: m.role, content: m.content })),
       temperature: options?.temperature ?? 0.7,
       maxTokens: options?.maxTokens ?? 4096,

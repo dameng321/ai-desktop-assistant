@@ -35,6 +35,42 @@ struct ChatDelta {
     content: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ModelInfo {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAIModelsResponse {
+    data: Vec<OpenAIModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OpenAIModel {
+    id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OllamaModelsResponse {
+    models: Vec<OllamaModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OllamaModel {
+    name: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoogleModelsResponse {
+    models: Vec<GoogleModel>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoogleModel {
+    name: String,
+}
+
 #[command]
 pub async fn get_system_info() -> Result<SystemInfo, String> {
     let os = env::consts::OS.to_string();
@@ -266,7 +302,103 @@ pub async fn chat_stream(
 }
 
 #[command]
-pub async fn chat_cancel(request_id: String) -> Result<(), String> {
+pub async fn chat_cancel(_request_id: String) -> Result<(), String> {
     // TODO: 实现取消功能
     Ok(())
+}
+
+#[command]
+pub async fn fetch_models(
+    base_url: String,
+    api_key: String,
+    provider_id: String,
+) -> Result<Vec<ModelInfo>, String> {
+    let client = reqwest::Client::new();
+    
+    let (url, mut headers) = match provider_id.as_str() {
+        "google" => {
+            (
+                format!("{}/models?key={}", base_url.trim_end_matches('/'), api_key),
+                reqwest::header::HeaderMap::new(),
+            )
+        }
+        "anthropic" => {
+            return Err("Anthropic 不支持通过 API 获取模型列表".to_string());
+        }
+        "ollama" => {
+            (
+                format!("{}/tags", base_url.trim_end_matches('/')),
+                reqwest::header::HeaderMap::new(),
+            )
+        }
+        _ => {
+            let mut h = reqwest::header::HeaderMap::new();
+            if !api_key.is_empty() {
+                h.insert("Authorization", format!("Bearer {}", api_key).parse().unwrap());
+            }
+            (
+                format!("{}/models", base_url.trim_end_matches('/')),
+                h,
+            )
+        }
+    };
+    
+    headers.insert("Content-Type", "application/json".parse().unwrap());
+    
+    let response = client
+        .get(&url)
+        .headers(headers)
+        .timeout(std::time::Duration::from_secs(15))
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {}", e))?;
+    
+    if !response.status().is_success() {
+        return Err(format!("API 返回错误: {}", response.status()));
+    }
+    
+    let models = match provider_id.as_str() {
+        "google" => {
+            let data: GoogleModelsResponse = response
+                .json()
+                .await
+                .map_err(|e| format!("解析响应失败: {}", e))?;
+            data.models
+                .into_iter()
+                .filter(|m| m.name.starts_with("models/"))
+                .map(|m| ModelInfo {
+                    id: m.name.trim_start_matches("models/").to_string(),
+                    name: m.name.trim_start_matches("models/").to_string(),
+                })
+                .collect()
+        }
+        "ollama" => {
+            let data: OllamaModelsResponse = response
+                .json()
+                .await
+                .map_err(|e| format!("解析响应失败: {}", e))?;
+            data.models
+                .into_iter()
+                .map(|m| ModelInfo {
+                    id: m.name.clone(),
+                    name: m.name,
+                })
+                .collect()
+        }
+        _ => {
+            let data: OpenAIModelsResponse = response
+                .json()
+                .await
+                .map_err(|e| format!("解析响应失败: {}", e))?;
+            data.data
+                .into_iter()
+                .map(|m| ModelInfo {
+                    id: m.id.clone(),
+                    name: m.id,
+                })
+                .collect()
+        }
+    };
+    
+    Ok(models)
 }

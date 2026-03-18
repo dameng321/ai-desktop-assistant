@@ -32,3 +32,5 @@ pub struct UserPaths {
     pub downloads: String,
     pub pictures: String,
 }
+
+pub mod knowledge;

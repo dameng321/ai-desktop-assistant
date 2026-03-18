@@ -3,12 +3,15 @@ import { Button } from '@/components/ui';
 import { SettingsLayout, SettingsSection, SettingsItem } from './SettingsLayout';
 import { ModelSettings } from './ModelSettings';
 import { GeneralSettings } from './GeneralSettings';
+import { ShortcutSettings } from './ShortcutSettings';
+import { VoiceSettings } from './VoiceSettings';
 
-type SettingsTab = 'general' | 'model' | 'shortcuts' | 'privacy';
+type SettingsTab = 'general' | 'model' | 'voice' | 'shortcuts' | 'privacy';
 
 const tabs: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '通用' },
   { id: 'model', label: '模型' },
+  { id: 'voice', label: '语音' },
   { id: 'shortcuts', label: '快捷键' },
   { id: 'privacy', label: '隐私' },
 ];
@@ -34,14 +37,16 @@ export function SettingsPage({ onClose }: SettingsPageProps) {
             <ModelSettings />
           </SettingsLayout>
         );
+      case 'voice':
+        return (
+          <SettingsLayout title="语音设置" description="配置语音输入和输出">
+            <VoiceSettings />
+          </SettingsLayout>
+        );
       case 'shortcuts':
         return (
           <SettingsLayout title="快捷键设置" description="自定义快捷键">
-            <SettingsSection title="快捷键配置">
-              <p className="text-sm text-muted-foreground">
-                快捷键功能将在 Tauri 后端实现后可用
-              </p>
-            </SettingsSection>
+            <ShortcutSettings />
           </SettingsLayout>
         );
       case 'privacy':

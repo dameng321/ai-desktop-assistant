@@ -29,6 +29,9 @@ const defaultSettings: UserSettings = {
     defaultModelId: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 4096,
+    contextWindow: 10,
+    contextStrategy: 'recent',
+    embeddingModel: 'text-embedding-3-small',
   },
   voice: {
     enabled: true,
@@ -91,6 +94,8 @@ function migrateSettings(savedSettings: unknown): UserSettings {
           defaultModelId: (model.model as string) || 'gpt-4o',
           temperature: (model.temperature as number) ?? 0.7,
           maxTokens: (model.maxTokens as number) ?? 4096,
+          contextWindow: (model.contextWindow as number) ?? 10,
+          contextStrategy: (model.contextStrategy as 'recent' | 'smart' | 'full') ?? 'recent',
         },
       };
     }

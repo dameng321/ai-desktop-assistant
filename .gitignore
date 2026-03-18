@@ -40,4 +40,4 @@ coverage
 src-tauri/target
 
 # TypeScript
-*.tsbuildinfo
+*.tsbuildinfonul
