@@ -33,9 +33,13 @@ export function PetWindow() {
 
   return (
     <div 
-      className="w-screen h-screen overflow-hidden"
-      style={{ background: 'transparent' }}
+      className="w-screen h-screen overflow-hidden bg-transparent border-none"
+      style={{ background: 'transparent', border: 'none' }}
     >
+      <style>{`
+        * { border: none !important; }
+        body { background: transparent !important; }
+      `}</style>
       <DesktopPet onChat={handleChat} />
     </div>
   );
