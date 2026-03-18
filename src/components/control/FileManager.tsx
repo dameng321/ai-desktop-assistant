@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useFileManager } from '@/hooks';
 import { Breadcrumb } from './Breadcrumb';
 import { FileList } from './FileList';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, useToast } from '@/components/ui';
 import { systemService, type UserPaths } from '@/services/api';
 
 export function FileManager() {
+  const { showToast } = useToast();
   const {
     currentPath,
     files,
@@ -38,6 +39,7 @@ export function FileManager() {
     if (!newFolderName.trim()) return;
     const success = await createFolder(newFolderName);
     if (success) {
+      showToast(`文件夹 "${newFolderName}" 创建成功`, 'success');
       setNewFolderName('');
       setShowNewFolder(false);
     }
@@ -46,8 +48,10 @@ export function FileManager() {
   const handleOpenPath = async () => {
     try {
       await systemService.openPath(currentPath);
+      showToast('已在资源管理器中打开', 'success');
     } catch (err) {
       console.error('打开路径失败:', err);
+      showToast('打开路径失败', 'error');
     }
   };
 
@@ -57,6 +61,20 @@ export function FileManager() {
     { name: '下载', path: userPaths.downloads, icon: '📥' },
     { name: '图片', path: userPaths.pictures, icon: '🖼️' },
   ] : [];
+
+  const handleDeleteFile = async (file: { name: string; is_dir: boolean; path: string }) => {
+    const success = await deleteFile(file as any);
+    if (success) {
+      showToast(`${file.is_dir ? '文件夹' : '文件'} "${file.name}" 已删除`, 'success');
+    }
+  };
+
+  const handleRenameFile = async (file: { name: string; path: string }, newName: string) => {
+    const success = await renameFile(file as any, newName);
+    if (success) {
+      showToast(`已重命名为 "${newName}"`, 'success');
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -198,8 +216,8 @@ export function FileManager() {
           selectedFile={selectedFile}
           onSelect={setSelectedFile}
           onOpen={enterFolder}
-          onDelete={deleteFile}
-          onRename={renameFile}
+          onDelete={handleDeleteFile}
+          onRename={handleRenameFile}
         />
       )}
 
