@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
-import { writeFile } from '@tauri-apps/plugin-fs';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { cn } from '@/lib';
 import { exportToMarkdown, exportToText, getExportFileName } from '@/lib/export';
 import { ConfirmDialog } from '@/components/ui';
@@ -73,8 +73,7 @@ export function ConversationItem({
       });
       
       if (filePath) {
-        const encoder = new TextEncoder();
-        await writeFile(filePath, encoder.encode(content));
+        await writeTextFile(filePath, content);
       }
     } catch {
       // 如果 Tauri 不可用，使用浏览器下载
