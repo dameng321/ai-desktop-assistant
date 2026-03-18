@@ -88,4 +88,8 @@ export const systemService = {
   async openPath(path: string): Promise<void> {
     return invoke('open_path', { path });
   },
+
+  async testApiConnection(baseUrl: string, apiKey: string, providerId: string): Promise<boolean> {
+    return invoke<boolean>('test_api_connection', { baseUrl, apiKey, providerId });
+  },
 };

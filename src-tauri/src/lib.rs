@@ -3,7 +3,6 @@ mod models;
 
 use commands::*;
 use tauri::{
-    image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
@@ -97,6 +96,7 @@ pub fn run() {
             get_system_info,
             get_user_paths,
             open_path,
+            test_api_connection,
             // 应用操作
             list_apps,
             open_app,

@@ -3,6 +3,7 @@ import { Button, Input } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
 import { createCustomProvider } from '@/lib/providers';
+import { systemService } from '@/services/api';
 import type { ModelProvider } from '@/types';
 
 export function ModelSettings() {
@@ -13,6 +14,7 @@ export function ModelSettings() {
   const [newModelInput, setNewModelInput] = useState<Record<string, string>>({});
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, 'success' | 'error' | null>>({});
+  const [testError, setTestError] = useState<Record<string, string>>({});
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
 
   const activeProvider = settings.model.providers.find(p => p.id === settings.model.activeProviderId);
@@ -22,32 +24,21 @@ export function ModelSettings() {
     
     setIsTesting(provider.id);
     setTestResult(prev => ({ ...prev, [provider.id]: null }));
+    setTestError(prev => ({ ...prev, [provider.id]: '' }));
     
     try {
-      const testUrl = provider.id === 'ollama' 
-        ? `${provider.baseUrl}/tags`
-        : `${provider.baseUrl}/models`;
-      
-      const headers: Record<string, string> = {};
-      if (provider.apiKey) {
-        if (provider.id === 'google') {
-          headers['x-goog-api-key'] = provider.apiKey;
-        } else if (provider.id === 'anthropic') {
-          headers['x-api-key'] = provider.apiKey;
-        } else {
-          headers['Authorization'] = `Bearer ${provider.apiKey}`;
-        }
-      }
-      
-      const response = await fetch(testUrl, { headers });
-      
-      if (response.ok) {
-        setTestResult(prev => ({ ...prev, [provider.id]: 'success' }));
-      } else {
-        setTestResult(prev => ({ ...prev, [provider.id]: 'error' }));
-      }
-    } catch {
+      await systemService.testApiConnection(
+        provider.baseUrl,
+        provider.apiKey,
+        provider.id
+      );
+      setTestResult(prev => ({ ...prev, [provider.id]: 'success' }));
+    } catch (err) {
       setTestResult(prev => ({ ...prev, [provider.id]: 'error' }));
+      setTestError(prev => ({ 
+        ...prev, 
+        [provider.id]: err instanceof Error ? err.message : String(err) 
+      }));
     } finally {
       setIsTesting(null);
     }
@@ -208,7 +199,9 @@ export function ModelSettings() {
                   testResult[activeProvider.id] === 'success' ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                {testResult[activeProvider.id] === 'success' ? '✓ 连接成功' : '✗ 连接失败，请检查配置'}
+                {testResult[activeProvider.id] === 'success' 
+                  ? '✓ 连接成功' 
+                  : `✗ ${testError[activeProvider.id] || '连接失败，请检查配置'}`}
               </div>
             )}
           </SettingsSection>

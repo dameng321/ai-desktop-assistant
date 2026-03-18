@@ -86,3 +86,60 @@ pub async fn get_user_paths() -> Result<UserPaths, String> {
         pictures,
     })
 }
+
+#[command]
+pub async fn test_api_connection(
+    base_url: String,
+    api_key: String,
+    provider_id: String,
+) -> Result<bool, String> {
+    let client = reqwest::Client::new();
+    
+    let (url, mut headers) = match provider_id.as_str() {
+        "google" => {
+            (
+                format!("{}/models?key={}", base_url.trim_end_matches('/'), api_key),
+                reqwest::header::HeaderMap::new(),
+            )
+        }
+        "anthropic" => {
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert("x-api-key", api_key.parse().unwrap());
+            h.insert("anthropic-version", "2023-06-01".parse().unwrap());
+            (
+                format!("{}/models", base_url.trim_end_matches('/')),
+                h,
+            )
+        }
+        "ollama" => {
+            (
+                format!("{}/tags", base_url.trim_end_matches('/')),
+                reqwest::header::HeaderMap::new(),
+            )
+        }
+        _ => {
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert("Authorization", format!("Bearer {}", api_key).parse().unwrap());
+            (
+                format!("{}/models", base_url.trim_end_matches('/')),
+                h,
+            )
+        }
+    };
+    
+    headers.insert("Content-Type", "application/json".parse().unwrap());
+    
+    let response = client
+        .get(&url)
+        .headers(headers)
+        .timeout(std::time::Duration::from_secs(10))
+        .send()
+        .await
+        .map_err(|e| format!("连接失败: {}", e))?;
+    
+    if response.status().is_success() {
+        Ok(true)
+    } else {
+        Err(format!("API 返回错误: {}", response.status()))
+    }
+}
