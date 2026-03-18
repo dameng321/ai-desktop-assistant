@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { Avatar } from '@/components/avatar';
 import { useSettingsStore } from '@/stores';
 import { AVATAR_PRESETS } from '@/lib/avatars';
@@ -26,13 +27,13 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'settings-storage') {
-        forceUpdate(n => n + 1);
-      }
+    const unlisten = listen('settings-changed', () => {
+      useSettingsStore.persist.rehydrate();
+      forceUpdate(n => n + 1);
+    });
+    return () => {
+      unlisten.then(fn => fn());
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
@@ -142,17 +143,16 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-2 bg-black/10 rounded-full blur-sm" />
-        
         <Avatar 
           emoji={avatarEmoji} 
           size={sizeConfig.avatar} 
           animate={isHovering || animation !== 'idle'}
           speaking={animation === 'wave'}
+          transparent
         />
 
         {isHovering && !showMenu && (
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-background border border-border rounded-lg px-2 py-1 text-xs whitespace-nowrap shadow-lg">
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border border-border rounded-lg px-2 py-1 text-xs whitespace-nowrap shadow-lg">
             点击我 ~
           </div>
         )}
@@ -160,7 +160,7 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
 
       {showMenu && (
         <div 
-          className="absolute top-full left-0 mt-2 bg-background border border-border rounded-lg shadow-lg overflow-hidden min-w-32"
+          className="absolute top-full left-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden min-w-32"
           onClick={e => e.stopPropagation()}
         >
           <button

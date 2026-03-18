@@ -1,22 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { DesktopPet } from '@/components/pet';
 
 export function PetWindow() {
+  const [, forceUpdate] = useState(0);
+
   useEffect(() => {
-    document.addEventListener('mousedown', async (e) => {
-      if ((e.target as HTMLElement).tagName === 'DIV' && 
-          (e.target as HTMLElement).classList.contains('fixed')) {
-        return;
-      }
+    const unlisten = listen('settings-changed', () => {
+      forceUpdate(n => n + 1);
     });
 
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
     });
 
+    document.body.style.background = 'transparent';
+    document.documentElement.style.background = 'transparent';
+
     return () => {
-      document.removeEventListener('mousedown', () => {});
-      document.removeEventListener('contextmenu', () => {});
+      unlisten.then(fn => fn());
     };
   }, []);
 
@@ -30,7 +32,10 @@ export function PetWindow() {
   };
 
   return (
-    <div className="w-screen h-screen bg-transparent overflow-hidden">
+    <div 
+      className="w-screen h-screen overflow-hidden"
+      style={{ background: 'transparent' }}
+    >
       <DesktopPet onChat={handleChat} />
     </div>
   );

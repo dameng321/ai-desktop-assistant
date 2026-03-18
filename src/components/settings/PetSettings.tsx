@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { PhysicalSize } from '@tauri-apps/api/dpi';
+import { emit } from '@tauri-apps/api/event';
 import { Button, useToast } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
@@ -22,6 +23,14 @@ export function PetSettings() {
   const petEnabled = settings.pet?.enabled ?? false;
   const petSize = settings.pet?.size ?? 'medium';
   const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
+
+  const notifyPetWindow = useCallback(async () => {
+    try {
+      await emit('settings-changed', {});
+    } catch (e) {
+      console.error('通知桌宠窗口失败:', e);
+    }
+  }, []);
 
   const checkPetWindow = useCallback(async () => {
     try {
@@ -92,6 +101,11 @@ export function PetSettings() {
     }
   };
 
+  const handleAvatarChange = async (avatarId: string) => {
+    updateSettings({ pet: { ...settings.pet, avatarId } });
+    await notifyPetWindow();
+  };
+
   return (
     <div className="space-y-6">
       <SettingsSection title="桌宠模式" description="在桌面上显示可爱的 AI 助手">
@@ -147,7 +161,7 @@ export function PetSettings() {
           {AVATAR_PRESETS.map(avatar => (
             <button
               key={avatar.id}
-              onClick={() => updateSettings({ pet: { ...settings.pet, avatarId: avatar.id } })}
+              onClick={() => handleAvatarChange(avatar.id)}
               className={`p-2 rounded-lg border text-2xl transition-colors ${
                 petAvatarId === avatar.id
                   ? 'bg-primary/10 border-primary'

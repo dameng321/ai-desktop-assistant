@@ -6,6 +6,7 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   animate?: boolean;
   speaking?: boolean;
+  transparent?: boolean;
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export function Avatar({
   size = 'md', 
   animate = false,
   speaking = false,
+  transparent = false,
   className = '' 
 }: AvatarProps) {
   const [bounce, setBounce] = useState(false);
@@ -50,11 +52,13 @@ export function Avatar({
       className={cn(
         sizeClasses[size],
         'rounded-full',
-        'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent',
         'flex items-center justify-center',
-        'border-2 border-primary/30',
-        'shadow-lg shadow-primary/10',
         'transition-all duration-200',
+        !transparent && [
+          'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent',
+          'border-2 border-primary/30',
+          'shadow-lg shadow-primary/10',
+        ],
         speaking && animate && [
           'scale-110',
           bounce && '-translate-y-1',
