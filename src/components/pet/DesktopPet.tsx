@@ -8,6 +8,12 @@ interface DesktopPetProps {
   onChat?: () => void;
 }
 
+const PET_SIZE_MAP = {
+  small: { avatar: 'md' as const, container: 80 },
+  medium: { avatar: 'lg' as const, container: 120 },
+  large: { avatar: 'xl' as const, container: 160 },
+};
+
 export function DesktopPet({ onChat }: DesktopPetProps) {
   const { settings } = useSettingsStore();
   const [position, setPosition] = useState({ x: 100, y: 100 });
@@ -18,7 +24,11 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
   const [animation, setAnimation] = useState<'idle' | 'wave' | 'jump'>('idle');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentAvatar = AVATAR_PRESETS.find(p => p.id === settings.avatar?.id);
+  const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
+  const petSize = settings.pet?.size ?? 'medium';
+  const sizeConfig = PET_SIZE_MAP[petSize];
+
+  const currentAvatar = AVATAR_PRESETS.find(p => p.id === petAvatarId);
   const avatarEmoji = currentAvatar?.emoji || '🤖';
 
   useEffect(() => {
@@ -38,13 +48,13 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
 
   useEffect(() => {
     const idleAnimation = setInterval(() => {
-      if (!isDragging && !isHovering) {
+      if (!isDragging && !isHovering && !showMenu) {
         setAnimation(Math.random() > 0.7 ? 'wave' : 'idle');
       }
     }, 3000);
 
     return () => clearInterval(idleAnimation);
-  }, [isDragging, isHovering]);
+  }, [isDragging, isHovering, showMenu]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -62,14 +72,14 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    const maxX = window.innerWidth - 80;
-    const maxY = window.innerHeight - 80;
+    const maxX = window.innerWidth - sizeConfig.container;
+    const maxY = window.innerHeight - sizeConfig.container;
     
     setPosition({
       x: Math.max(0, Math.min(newX, maxX)),
       y: Math.max(0, Math.min(newY, maxY)),
     });
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, sizeConfig.container]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -109,7 +119,6 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
         zIndex: 9999,
       }}
     >
-      {/* 桌宠主体 */}
       <div
         className={cn(
           'relative cursor-pointer transition-transform',
@@ -122,18 +131,15 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {/* 阴影 */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-2 bg-black/10 rounded-full blur-sm" />
         
-        {/* 头像 */}
         <Avatar 
           emoji={avatarEmoji} 
-          size="lg" 
+          size={sizeConfig.avatar} 
           animate={isHovering || animation !== 'idle'}
           speaking={animation === 'wave'}
         />
 
-        {/* 提示气泡 */}
         {isHovering && !showMenu && (
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-background border border-border rounded-lg px-2 py-1 text-xs whitespace-nowrap shadow-lg">
             点击我 ~
@@ -141,7 +147,6 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
         )}
       </div>
 
-      {/* 右键菜单 */}
       {showMenu && (
         <div 
           className="absolute top-full left-0 mt-2 bg-background border border-border rounded-lg shadow-lg overflow-hidden min-w-32"
@@ -167,6 +172,12 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
             className="w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
           >
             <span>🏠</span> 重置位置
+          </button>
+          <button
+            onClick={() => setShowMenu(false)}
+            className="w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center gap-2 border-t border-border"
+          >
+            <span>✕</span> 关闭菜单
           </button>
         </div>
       )}

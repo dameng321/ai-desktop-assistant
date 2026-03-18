@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": [
-    "main"
+    "main",
+    "pet"
   ],
   "permissions": [
     "core:default",
@@ -12,6 +13,15 @@
     "dialog:default",
     "shell:allow-open",
     "clipboard-manager:default",
-    "fs:default"
+    "fs:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-start-dragging",
+    "core:window:allow-inner-position",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:webview:allow-create-webview"
   ]
 }

@@ -1,16 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Button, useToast } from '@/components/ui';
 import { SettingsSection, SettingsItem } from './SettingsLayout';
 import { useSettingsStore } from '@/stores';
+import { AVATAR_PRESETS } from '@/lib/avatars';
+
+type PetSize = 'small' | 'medium' | 'large';
+
+const PET_SIZES: { id: PetSize; label: string; size: number }[] = [
+  { id: 'small', label: '小', size: 100 },
+  { id: 'medium', label: '中', size: 150 },
+  { id: 'large', label: '大', size: 200 },
+];
 
 export function PetSettings() {
   const { showToast } = useToast();
   const { settings, updateSettings } = useSettingsStore();
   const [isPetVisible, setIsPetVisible] = useState(false);
 
+  const petEnabled = settings.pet?.enabled ?? false;
+  const petSize = settings.pet?.size ?? 'medium';
+  const petAvatarId = settings.pet?.avatarId ?? settings.avatar?.id ?? 'robot';
+
   const checkPetWindow = useCallback(async () => {
     try {
-      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
       const petWindow = await WebviewWindow.getByLabel('pet');
       if (petWindow) {
         const visible = await petWindow.isVisible();
@@ -27,19 +40,18 @@ export function PetSettings() {
 
   const togglePet = useCallback(async () => {
     try {
-      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
       let petWindow = await WebviewWindow.getByLabel('pet');
+      const sizeConfig = PET_SIZES.find(s => s.id === petSize) ?? PET_SIZES[1];
       
       if (!petWindow) {
-        const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
         petWindow = new WebviewWindow('pet', {
           url: '/pet',
           decorations: false,
           transparent: true,
           alwaysOnTop: true,
           skipTaskbar: true,
-          width: 200,
-          height: 200,
+          width: sizeConfig.size,
+          height: sizeConfig.size,
         });
         await petWindow.show();
         setIsPetVisible(true);
@@ -58,11 +70,26 @@ export function PetSettings() {
       }
     } catch (e) {
       console.error('切换桌宠失败:', e);
-      showToast('操作失败', 'error');
+      const message = e instanceof Error ? e.message : String(e);
+      showToast(`操作失败: ${message}`, 'error');
     }
-  }, [showToast]);
+  }, [showToast, petSize]);
 
-  const petEnabled = settings.pet?.enabled ?? false;
+  const handleSizeChange = async (size: PetSize) => {
+    updateSettings({ pet: { ...settings.pet, size } });
+    
+    const sizeConfig = PET_SIZES.find(s => s.id === size);
+    if (sizeConfig) {
+      try {
+        const petWindow = await WebviewWindow.getByLabel('pet');
+        if (petWindow) {
+          await petWindow.setSize({ width: sizeConfig.size, height: sizeConfig.size });
+        }
+      } catch (e) {
+        console.error('调整窗口大小失败:', e);
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -93,6 +120,43 @@ export function PetSettings() {
           >
             {isPetVisible ? '隐藏桌宠' : '显示桌宠'}
           </Button>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="桌宠大小" description="调整桌宠显示尺寸">
+        <div className="flex gap-2">
+          {PET_SIZES.map(size => (
+            <button
+              key={size.id}
+              onClick={() => handleSizeChange(size.id)}
+              className={`flex-1 py-2 px-3 rounded-md border text-sm transition-colors ${
+                petSize === size.id
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background border-border hover:bg-accent'
+              }`}
+            >
+              {size.label}
+            </button>
+          ))}
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="桌宠形象" description="选择桌宠显示的形象">
+        <div className="grid grid-cols-5 gap-2">
+          {AVATAR_PRESETS.map(avatar => (
+            <button
+              key={avatar.id}
+              onClick={() => updateSettings({ pet: { ...settings.pet, avatarId: avatar.id } })}
+              className={`p-2 rounded-lg border text-2xl transition-colors ${
+                petAvatarId === avatar.id
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-background border-border hover:bg-accent'
+              }`}
+              title={avatar.name}
+            >
+              {avatar.emoji}
+            </button>
+          ))}
         </div>
       </SettingsSection>
 

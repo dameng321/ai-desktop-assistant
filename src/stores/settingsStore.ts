@@ -46,6 +46,8 @@ const defaultSettings: UserSettings = {
   },
   pet: {
     enabled: false,
+    size: 'medium',
+    avatarId: 'robot',
   },
   shortcuts: {
     wakeUp: 'Ctrl+Shift+A',

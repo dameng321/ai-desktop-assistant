@@ -60,6 +60,8 @@ export interface AvatarSettings {
 
 export interface PetSettings {
   enabled: boolean;
+  size: 'small' | 'medium' | 'large';
+  avatarId: string;
   position?: { x: number; y: number };
 }
 

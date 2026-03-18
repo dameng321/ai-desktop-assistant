@@ -412,6 +412,12 @@
   - 配置透明窗口（decorations: false, transparent: true, alwaysOnTop: true）
   - 支持拖动移动位置
   - 点击显示快捷菜单（开始对话、设置、关闭）
+- **完善桌宠功能**：
+  - 添加窗口权限配置（capabilities/default.json）
+  - 添加桌宠大小设置（小/中/大）
+  - 添加桌宠形象选择（使用预设头像）
+  - 添加窗口大小动态调整
+  - 优化菜单交互（添加关闭按钮）
 
 ---
 
