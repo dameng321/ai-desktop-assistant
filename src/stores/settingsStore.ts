@@ -175,15 +175,29 @@ export const useSettingsStore = create<SettingsState>()(
       },
       
       setActiveProvider: (providerId) => {
-        set(state => ({
-          settings: {
-            ...state.settings,
-            model: {
-              ...state.settings.model,
-              activeProviderId: providerId,
+        set(state => {
+          const newProvider = state.settings.model.providers.find(p => p.id === providerId);
+          let newDefaultModelId = state.settings.model.defaultModelId;
+          
+          // 检查当前默认模型是否在新供应商的模型列表中
+          if (newProvider && newProvider.models.length > 0) {
+            const modelExists = newProvider.models.some(m => m.id === newDefaultModelId);
+            if (!modelExists) {
+              newDefaultModelId = newProvider.models[0].id;
+            }
+          }
+          
+          return {
+            settings: {
+              ...state.settings,
+              model: {
+                ...state.settings.model,
+                activeProviderId: providerId,
+                defaultModelId: newDefaultModelId,
+              },
             },
-          },
-        }));
+          };
+        });
       },
       
       reset: () => {

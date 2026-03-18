@@ -67,6 +67,12 @@ export function ModelSettings() {
     const updatedModels = [...provider.models, newModel];
     
     updateProvider(providerId, { models: updatedModels });
+    
+    // 如果是第一个模型，自动设为默认模型
+    if (provider.models.length === 0) {
+      updateModel({ defaultModelId: modelId });
+    }
+    
     setNewModelInput(prev => ({ ...prev, [providerId]: '' }));
   };
 
