@@ -58,8 +58,8 @@ export function PetSettings() {
           transparent: true,
           alwaysOnTop: true,
           skipTaskbar: true,
-          width: 300,
-          height: 300,
+          width: 150,
+          height: 150,
         });
         await petWindow.show();
         setIsPetVisible(true);

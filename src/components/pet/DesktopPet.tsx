@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { PhysicalPosition } from '@tauri-apps/api/dpi';
 import { Avatar } from '@/components/avatar';
 import { useSettingsStore } from '@/stores';
 import { AVATAR_PRESETS } from '@/lib/avatars';
@@ -24,9 +26,11 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [animation, setAnimation] = useState<'idle' | 'wave' | 'jump'>('idle');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const appWindowRef = useRef<ReturnType<typeof getCurrentWindow> | null>(null);
 
   useEffect(() => {
+    appWindowRef.current = getCurrentWindow();
+    
     const unlisten = listen('settings-changed', () => {
       useSettingsStore.persist.rehydrate();
       forceUpdate(n => n + 1);
@@ -47,7 +51,11 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
     const savedPosition = localStorage.getItem('desktopPetPosition');
     if (savedPosition) {
       try {
-        setPosition(JSON.parse(savedPosition));
+        const saved = JSON.parse(savedPosition);
+        setPosition(saved);
+        if (appWindowRef.current) {
+          appWindowRef.current.setPosition(new PhysicalPosition(saved.x, saved.y));
+        }
       } catch {
         // ignore
       }
@@ -72,22 +80,21 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
     if (e.button !== 0) return;
     setIsDragging(true);
     setDragOffset({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+      x: e.clientX,
+      y: e.clientY,
     });
     setShowMenu(false);
-  }, [position]);
+  }, []);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
+  const handleMouseMove = useCallback(async (e: MouseEvent) => {
+    if (!isDragging || !appWindowRef.current) return;
     
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+    const newX = e.screenX - dragOffset.x;
+    const newY = e.screenY - dragOffset.y;
     
-    setPosition({
-      x: Math.max(0, newX),
-      y: Math.max(0, newY),
-    });
+    setPosition({ x: newX, y: newY });
+    
+    await appWindowRef.current.setPosition(new PhysicalPosition(newX, newY));
   }, [isDragging, dragOffset]);
 
   const handleMouseUp = useCallback(() => {
@@ -118,15 +125,21 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
     onChat?.();
   };
 
+  const handleResetPosition = async () => {
+    const newPos = { x: 100, y: 100 };
+    setPosition(newPos);
+    if (appWindowRef.current) {
+      await appWindowRef.current.setPosition(new PhysicalPosition(100, 100));
+    }
+  };
+
   return (
     <div
-      ref={containerRef}
-      className="fixed select-none"
-      style={{
-        left: position.x,
-        top: position.y,
-        zIndex: 9999,
-      }}
+      className={cn(
+        'select-none flex items-center justify-center',
+        isDragging && 'cursor-grabbing'
+      )}
+      style={{ width: '100vw', height: '100vh' }}
     >
       <div
         className={cn(
@@ -176,7 +189,7 @@ export function DesktopPet({ onChat }: DesktopPetProps) {
             <span>👋</span> 打招呼
           </button>
           <button
-            onClick={() => setPosition({ x: 100, y: 100 })}
+            onClick={handleResetPosition}
             className="w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
           >
             <span>🏠</span> 重置位置
